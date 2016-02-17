@@ -1,3 +1,9 @@
+# Tox files
+.tox
+
+# Eggs
+*.egg-info
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
