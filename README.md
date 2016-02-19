@@ -21,7 +21,7 @@ a ticket on github. If you'd like to contribute code please create a github
 
 ### Supported platforms
 
-Schnibble works on CPYthon 2.7 (ironically selected due to its stability)
+Schnibble works on CPython 2.7 (ironically selected due to its stability)
 on any OS platform. Support for Pypy will be investigated later. Python 3.x
 support is a plan for later period after all of the basics are supported on
 a stable bytecode set.
