@@ -4,7 +4,7 @@ import types
 from unittest import TestCase, skipIf
 
 from schnibble.cpy27 import Load, Add, Return
-from schnibble.common import emit
+from schnibble.common import emit, dec_inc
 
 
 def en(n):
@@ -22,18 +22,34 @@ def co(f):
 class EmitterTests(TestCase):
 
     def test_Load(self):
-        self.assertEqual(en(Load(1)), [124, 1, 0])
+        ctx = emit([Load(0xAABB)])
+        self.assertEqual(ctx.buf.tolist(), [124, 0xBB, 0xAA])
+        self.assertEqual(ctx.stack_usage(), (0, 1, 1))
+        self.assertFalse(ctx.is_valid_stack())
 
     def test_Return(self):
-        self.assertEqual(en(Return()), [83])
+        ctx = emit([Return()])
+        self.assertEqual(ctx.buf.tolist(), [83])
+        self.assertEqual(ctx.stack_changes, [dec_inc(-1, +0)])
+        self.assertEqual(ctx.stack_usage(), (-1, -1, 0))
+        self.assertFalse(ctx.is_valid_stack())
 
     def test_Add(self):
+        ctx = emit([Add()])
         # XXX: this should not be allowed in practice
-        self.assertEqual(en(Add()), [23])
+        self.assertEqual(ctx.buf.tolist(), [23])
+        self.assertEqual(ctx.stack_changes, [dec_inc(-2, +1)])
+        self.assertEqual(ctx.stack_usage(), (-2, -1, 0))
+        self.assertFalse(ctx.is_valid_stack())
 
     def test_smoke(self):
-        self.assertEqual(en(Return(Add(Load(0), Load(1)))),
-                         [124, 0, 0, 124, 1, 0, 23, 83])
+        ctx = emit([Return(Add(Load(0), Load(1)))])
+        self.assertEqual(ctx.buf.tolist(), [124, 0, 0, 124, 1, 0, 23, 83])
+        self.assertEqual(ctx.stack_changes, [dec_inc(-0, +1), dec_inc(-0, +1),
+                                             dec_inc(-2, +1), dec_inc(-1, 0)])
+        self.assertEqual(ctx.stack_usage(), (0, 0, 2))
+        self.assertTrue(ctx.is_valid_stack(), True)
+
 
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
     def test_sanity(self):
@@ -43,14 +59,15 @@ class EmitterTests(TestCase):
 
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
     def test_it_really_works(self):
+        ctx = emit([Return(Add(Load(0), Load(1)))])
         # code(argcount, nlocals, stacksize, flags, codestring, constants,
         #      names, varnames, filename, name, firstlineno, lnotab,
         #      freevars[, cellvars]])
         argcount = 2
         nlocals = argcount + 0
-        stacksize = 2  # TODO: have a way to compute this
+        stacksize = ctx.stack_usage().max_size
         flags = 0  # TODO: understand real flags
-        codestring = emit([Return(Add(Load(0), Load(1)))]).buf.tostring()
+        codestring = ctx.buf.tostring()
         constants = (None, )
         names = ()
         varnames = ('a', 'b')

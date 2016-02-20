@@ -1,7 +1,11 @@
 """Common code, independent of target Python version."""
 import array
 import abc
+import collections
 
+#: Decrement-increment pair
+dec_inc = collections.namedtuple("dec_inc", "dec inc")
+stack_usage = collections.namedtuple("stack_usage", "min_size final_size max_size")
 
 class BaseOp(object):
     """Base class for all Python bytecode operations."""
@@ -10,6 +14,7 @@ class BaseOp(object):
 
     _by_op = [None] * 255
     has_arg = False
+    stack = dec_inc(0, 0)
 
     @classmethod
     @abc.abstractmethod
@@ -38,8 +43,32 @@ class EmitterContext(object):
     """State of ongoing code emission."""
 
     def __init__(self):
-        """Initialize context with empty code buffer."""
-        self.buf = array.array('b')
+        """Initialize context with empty code and stack changes buffers."""
+        self.buf = array.array('B')
+        self.stack_changes = []
+
+    def stack_usage(self):
+        """
+        Analyze stack usage:
+
+        :returns:
+            Tuple ``(min_size, final_size, max_size)`` that represents
+            stack usage.
+        """
+        min_size = 0
+        max_size = 0
+        size = 0
+        for mod in self.stack_changes:
+            size += mod.dec
+            min_size = min(min_size, size)
+            size += mod.inc
+            max_size = max(max_size, size)
+        return stack_usage(min_size, size, max_size)
+
+    def is_valid_stack(self):
+        """Check if stack usage is correct."""
+        usage = self.stack_usage()
+        return usage.min_size >= 0 and usage.final_size == 0
 
 
 class Emittable(object):
@@ -59,6 +88,6 @@ def emit(tree):
         raise TypeError("tree is not a list")
     for node in tree:
         if not isinstance(node, Emittable):
-            raise TypeError("note is not Emittable")
+            raise TypeError("node: {!r} is not Emittable".format(node))
         node.emit(ctx)
     return ctx

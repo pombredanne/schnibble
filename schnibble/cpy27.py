@@ -1,4 +1,5 @@
 """Module containing instructions used in CPython 2.7."""
+
 from schnibble import common
 
 
@@ -24,16 +25,21 @@ class LOAD_FAST(Py27Op):
     """Load local variable onto the stack."""
 
     has_arg = True
+    stack = common.dec_inc(-0, +1)
 
 
 @Py27Op.register(23)
 class BINARY_ADD(Py27Op):
     """Add two topmost arguments from the stack."""
 
+    stack = common.dec_inc(-2, +1)
+
 
 @Py27Op.register(83)
 class RETURN_VALUE(Py27Op):
     """Pop one value and return it."""
+
+    stack = common.dec_inc(-1, +0)
 
 
 class Node(common.Emittable):
@@ -61,6 +67,7 @@ class Node(common.Emittable):
         """Emit instructions to the specified EmitterContext."""
         for child in self.args:
             child.emit(ctx)
+        ctx.stack_changes.append(self.op.stack)
         ctx.buf.append(self.op.code)
         if self.op.has_arg:
             ctx.buf.append(self.arg & 255)
