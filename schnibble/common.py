@@ -5,6 +5,7 @@ class BaseOp(object):
     """Base class for all Python bytecode operations."""
 
     _by_op = [None] * 255
+    has_arg = False
 
     @classmethod
     def is_valid_op_code(cls, op_code):
