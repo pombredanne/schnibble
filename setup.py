@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(
-    name="shnibble",
+    name="schnibble",
     version="0.0",
     packages=["schnibble"],
     author="Zygmunt Krynicki",
