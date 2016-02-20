@@ -1,0 +1,9 @@
+sudo: false
+notifications:
+  on_success: change
+  on_failure: always
+language: python
+python:
+    - "2.7"
+script:
+    python setup.py test
