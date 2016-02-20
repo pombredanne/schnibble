@@ -8,5 +8,15 @@ setup(
     author="Zygmunt Krynicki",
     author_email="me@zygoon.pl",
     description="Toolkit for processing Python bytecode",
-    test_suite='schnibble'
+    test_suite='schnibble',
+    license="GPLv3",
+    classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'Intended Audience :: Developers',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Software Development :: Code Generators',
+        'Topic :: Software Development :: Compilers',
+    ],
 )
