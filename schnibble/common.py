@@ -46,6 +46,19 @@ class EmitterContext(object):
         """Initialize context with empty code and stack changes buffers."""
         self.buf = array.array('B')
         self.stack_changes = []
+        self.local_vars = []
+
+    def push(self):
+        pass
+
+    def pop(self):
+        pass
+
+    def add_local(self, name):
+        self.local_vars.append(name)
+
+    def local_index(self, name):
+        return self.local_vars.index(name)
 
     def stack_usage(self):
         """

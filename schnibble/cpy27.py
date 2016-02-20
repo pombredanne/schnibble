@@ -70,8 +70,28 @@ class Node(common.Emittable):
         ctx.stack_changes.append(self.op.stack)
         ctx.buf.append(self.op.code)
         if self.op.has_arg:
-            ctx.buf.append(self.arg & 255)
-            ctx.buf.append(self.arg >> 8)
+            arg = self.translate_arg(ctx, self.arg)
+            ctx.buf.append(arg & 255)
+            ctx.buf.append(arg >> 8)
+
+    @classmethod
+    def translate_arg(cls, ctx, arg):
+        return arg
+
+
+class Function(common.Emittable):
+
+    def __init__(self, args, progn):
+        self.args = args
+        self.progn = progn
+
+    def emit(self, ctx):
+        ctx.push()
+        for arg in self.args:
+            ctx.add_local(arg)
+        for prog in self.progn:
+            prog.emit(ctx)
+        ctx.pop()
 
 
 class Add(Node):
@@ -90,3 +110,13 @@ class Load(Node):
     """Local variable load node."""
 
     op = LOAD_FAST
+
+    @classmethod
+    def translate_arg(cls, ctx, arg):
+        if isinstance(arg, int):
+            return arg
+        elif isinstance(arg, str):
+            return ctx.local_index(arg)
+        else:
+            raise TypeError("arg is {!r}".format(arg))
+

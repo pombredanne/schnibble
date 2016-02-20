@@ -3,7 +3,7 @@ import sys
 import types
 from unittest import TestCase, skipIf
 
-from schnibble.cpy27 import Load, Add, Return
+from schnibble.cpy27 import Load, Add, Return, Function
 from schnibble.common import emit, dec_inc
 
 
@@ -42,6 +42,11 @@ class EmitterTests(TestCase):
         self.assertEqual(ctx.stack_usage(), (-2, -1, 0))
         self.assertFalse(ctx.is_valid_stack())
 
+    def test_Function(self):
+        ctx = emit([Function(('a', 'b'), [Return(Add(Load('a'), Load('b')))])])
+        self.assertEqual(ctx.buf.tolist(), [124, 0, 0, 124, 1, 0, 23, 83])
+        self.assertEqual(ctx.local_vars, ['a', 'b'])
+
     def test_smoke(self):
         ctx = emit([Return(Add(Load(0), Load(1)))])
         self.assertEqual(ctx.buf.tolist(), [124, 0, 0, 124, 1, 0, 23, 83])
@@ -49,7 +54,6 @@ class EmitterTests(TestCase):
                                              dec_inc(-2, +1), dec_inc(-1, 0)])
         self.assertEqual(ctx.stack_usage(), (0, 0, 2))
         self.assertTrue(ctx.is_valid_stack(), True)
-
 
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
     def test_sanity(self):
@@ -59,18 +63,19 @@ class EmitterTests(TestCase):
 
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
     def test_it_really_works(self):
-        ctx = emit([Return(Add(Load(0), Load(1)))])
+        ctx = emit([Function(('a', 'b'), [
+            Return(Add(Load(0), Load(1)))])])
         # code(argcount, nlocals, stacksize, flags, codestring, constants,
         #      names, varnames, filename, name, firstlineno, lnotab,
         #      freevars[, cellvars]])
-        argcount = 2
-        nlocals = argcount + 0
+        argcount = len(ctx.local_vars)
+        nlocals = len(ctx.local_vars)
         stacksize = ctx.stack_usage().max_size
         flags = 0  # TODO: understand real flags
         codestring = ctx.buf.tostring()
         constants = (None, )
         names = ()
-        varnames = ('a', 'b')
+        varnames = tuple(ctx.local_vars)
         filename = 'dummy.py'
         name = 'add'
         firstlineno = 1
