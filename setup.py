@@ -1,3 +1,4 @@
+"""Setup script for Schnibble."""
 from setuptools import setup
 
 setup(

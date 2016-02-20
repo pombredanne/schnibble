@@ -1,3 +1,4 @@
+"""Unit tests for cpy27."""
 import sys
 from unittest import TestCase, skipIf
 
@@ -8,8 +9,10 @@ from schnibble.common import emit
 def en(n):
     return emit([n]).buf.tolist()
 
+
 def et(t):
     return emit(t).buf.tolist()
+
 
 def co(f):
     return [ord(b) for b in f.__code__.co_code]

@@ -1,3 +1,4 @@
+"""Common code, independent of target Python version."""
 import array
 import abc
 
@@ -10,6 +11,7 @@ class BaseOp(object):
 
     @classmethod
     def is_valid_op_code(cls, op_code):
+        """Check if given operation code is valid."""
         raise NotImplementedError()
 
     @classmethod
@@ -17,6 +19,7 @@ class BaseOp(object):
         """Decorator for registering instruction classes."""
         if not cls.is_valid_op_code(op_code):
             raise ValueError("{} is not a valid op code".format(op_code))
+
         def decorator(instr_cls):
             cls._by_op[op_code] = instr_cls
             instr_cls.code = op_code
@@ -33,16 +36,18 @@ class EmitterContext(object):
     """State of ongoing code emission."""
 
     def __init__(self):
+        """Initialize context with empty code buffer."""
         self.buf = array.array('b')
 
 
 class Emittable(object):
     """Interface of objects that participate in code emission."""
+
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def emit(self, ctx):
-        """Emit instructions to the specified EmitterContext"""
+        """Emit instructions to the specified EmitterContext."""
 
 
 def emit(tree):

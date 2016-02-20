@@ -4,6 +4,7 @@ from schnibble import common
 
 class Py27Op(common.BaseOp):
     """Base class for all Python 2.7 bytecode instructions."""
+
     _by_op = [None] * 255
     _blacklisted_ops = {
         # Instructions that are not used by Python 2.7
@@ -14,12 +15,14 @@ class Py27Op(common.BaseOp):
 
     @classmethod
     def is_valid_op_code(cls, op_code):
+        """Check if given operation code is valid for CPython 2.7."""
         return 0 <= op_code <= 147 and op_code not in cls._blacklisted_ops
 
 
 @Py27Op.register(124)
 class LOAD_FAST(Py27Op):
     """Load local variable onto the stack."""
+
     has_arg = True
 
 
@@ -37,6 +40,17 @@ class Node(common.Emittable):
     """Base class for computation nodes."""
 
     def __init__(self, *args):
+        """
+        Initialize a node.
+
+        :param args:
+            Variable list of arguments.
+
+        If the operation associated with the constructed node takes
+        an argument (``op.has_arg`` is True) then the first argument in ``args`
+        is the argument of the operation. In either case the remaining elements
+        of ``args`` are treated as children nodes.
+        """
         if self.op.has_arg:
             self.arg = args[0]
             self.args = args[1:]
@@ -44,6 +58,7 @@ class Node(common.Emittable):
             self.args = args
 
     def emit(self, ctx):
+        """Emit instructions to the specified EmitterContext."""
         for child in self.args:
             child.emit(ctx)
         ctx.buf.append(self.op.code)
