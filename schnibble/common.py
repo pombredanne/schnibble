@@ -6,13 +6,15 @@ import abc
 class BaseOp(object):
     """Base class for all Python bytecode operations."""
 
+    __metaclass__ = abc.ABCMeta
+
     _by_op = [None] * 255
     has_arg = False
 
     @classmethod
+    @abc.abstractmethod
     def is_valid_op_code(cls, op_code):
         """Check if given operation code is valid."""
-        raise NotImplementedError()
 
     @classmethod
     def register(cls, op_code):
