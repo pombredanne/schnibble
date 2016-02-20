@@ -23,6 +23,13 @@ class EmitterTests(TestCase):
     def test_Load(self):
         self.assertEqual(en(Load(1)), [124, 1, 0])
 
+    def test_Return(self):
+        self.assertEqual(en(Return()), [83])
+
+    def test_Add(self):
+        # XXX: this should not be allowed in practice
+        self.assertEqual(en(Add()), [23])
+
     def test_smoke(self):
         self.assertEqual(en(Return(Add(Load(0), Load(1)))),
                          [124, 0, 0, 124, 1, 0, 23, 83])
