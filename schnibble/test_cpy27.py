@@ -1,5 +1,6 @@
 """Unit tests for cpy27."""
 import sys
+import types
 from unittest import TestCase, skipIf
 
 from schnibble.cpy27 import Load, Add, Return
@@ -39,3 +40,36 @@ class EmitterTests(TestCase):
         self.assertEqual(
             en(Return(Add(Load(0), Load(1)))),
             co(lambda a, b: a + b))
+
+    @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
+    def test_it_really_works(self):
+        # code(argcount, nlocals, stacksize, flags, codestring, constants,
+        #      names, varnames, filename, name, firstlineno, lnotab,
+        #      freevars[, cellvars]])
+        argcount = 2
+        nlocals = argcount + 0
+        stacksize = 2  # TODO: have a way to compute this
+        flags = 0  # TODO: understand real flags
+        codestring = emit([Return(Add(Load(0), Load(1)))]).buf.tostring()
+        constants = (None, )
+        names = ()
+        varnames = ('a', 'b')
+        filename = 'dummy.py'
+        name = 'add'
+        firstlineno = 1
+        lnotab = ''
+        freevars = ()
+        cellvars = ()
+        code = types.CodeType(argcount, nlocals, stacksize, flags, codestring,
+            constants, names, varnames, filename, name, firstlineno, lnotab,
+            freevars, cellvars)
+        globals = {}
+        name = None
+        argdefs = ()
+        closure = ()
+        # function(code, globals[, name[, argdefs[, closure]]])
+        add = types.FunctionType(code, globals, name, argdefs, closure)
+        # Now see if it really works
+        self.assertEqual(add(1, 2), 3)
+        self.assertEqual(add("hello", " world"), "hello world")
+        self.assertEqual(add(['foo'], ['bar']), ['foo', 'bar'])
