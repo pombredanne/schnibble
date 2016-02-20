@@ -7,4 +7,5 @@ setup(
     author="Zygmunt Krynicki",
     author_email="me@zygoon.pl",
     description="Toolkit for processing Python bytecode",
+    test_suite='schnibble'
 )
