@@ -1,4 +1,5 @@
 sudo: false
+cache: pip
 notifications:
   on_success: change
   on_failure: always
