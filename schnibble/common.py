@@ -1,4 +1,5 @@
 import array
+import abc
 
 
 class BaseOp(object):
@@ -26,3 +27,31 @@ class BaseOp(object):
     def by_op_code(cls, op_code):
         """Find instruction given its opcode."""
         return cls._by_op[op_code]
+
+
+class EmitterContext(object):
+    """State of ongoing code emission."""
+
+    def __init__(self):
+        self.buf = array.array('b')
+
+
+class Emittable(object):
+    """Interface of objects that participate in code emission."""
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def emit(self, ctx):
+        """Emit instructions to the specified EmitterContext"""
+
+
+def emit(tree):
+    """Emit instruction from a tree of Emittable objets."""
+    ctx = EmitterContext()
+    if not isinstance(tree, list):
+        raise TypeError("tree is not a list")
+    for node in tree:
+        if not isinstance(node, Emittable):
+            raise TypeError("note is not Emittable")
+        node.emit(ctx)
+    return ctx
