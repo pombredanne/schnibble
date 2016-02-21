@@ -64,7 +64,7 @@ class EmitterTests(TestCase):
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
     def test_it_really_works(self):
         ctx = emit([Function(('a', 'b'), [
-            Return(Add(Load(0), Load(1)))])])
+            Return(Add(Load('a'), Load('b')))])])
         # code(argcount, nlocals, stacksize, flags, codestring, constants,
         #      names, varnames, filename, name, firstlineno, lnotab,
         #      freevars[, cellvars]])
