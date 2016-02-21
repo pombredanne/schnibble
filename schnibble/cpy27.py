@@ -20,6 +20,13 @@ class Py27Op(common.BaseOp):
         return 0 <= op_code <= 147 and op_code not in cls._blacklisted_ops
 
 
+@Py27Op.register(11)
+class UNARY_NEGATIVE(Py27Op):
+    """Negate the topmost item on the stack."""
+
+    stack = common.dec_inc(-1, +1)
+
+
 @Py27Op.register(124)
 class LOAD_FAST(Py27Op):
     """Load local variable onto the stack."""
@@ -111,6 +118,12 @@ class Sub(OperationNode):
     """Binary subtraction node."""
 
     op = BINARY_SUBTRACT
+
+
+class Neg(OperationNode):
+    """Unary negation node."""
+
+    op = UNARY_NEGATIVE
 
 
 class Return(OperationNode):

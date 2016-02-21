@@ -3,7 +3,7 @@ import sys
 import types
 from unittest import TestCase, skipIf
 
-from schnibble.cpy27 import Load, Add, Sub, Return, Function
+from schnibble.cpy27 import Neg, Load, Add, Sub, Return, Function
 from schnibble.common import emit, dec_inc
 
 
@@ -20,6 +20,12 @@ def co(f):
 
 
 class EmitterTests(TestCase):
+
+    def test_Neg(self):
+        ctx = emit([Neg()])
+        self.assertEqual(ctx.buf.tolist(), [11])
+        self.assertEqual(ctx.stack_usage(), (-1, 0, 0))
+        self.assertFalse(ctx.is_valid_stack())
 
     def test_Load(self):
         ctx = emit([Load(0xAABB)])
@@ -64,6 +70,12 @@ class EmitterTests(TestCase):
         self.assertTrue(ctx.is_valid_stack(), True)
 
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
+    def test_neg_sanity(self):
+        self.assertEqual(
+            en(Return(Neg(Load(0)))),
+            co(lambda a: -a))
+
+    @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
     def test_add_sanity(self):
         self.assertEqual(
             en(Return(Add(Load(0), Load(1)))),
@@ -74,7 +86,6 @@ class EmitterTests(TestCase):
         self.assertEqual(
             en(Return(Sub(Load(0), Load(1)))),
             co(lambda a, b: a - b))
-
 
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
     def test_it_really_works(self):
