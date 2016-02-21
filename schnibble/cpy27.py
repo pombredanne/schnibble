@@ -43,8 +43,8 @@ class LOAD_FAST(Py27Op):
     @classmethod
     def simulate(cls, ctx, op_arg):
         """Simulate execution of the operation."""
-        # TODO: resolve op_arg to a symbolic name.
-        result = Load(op_arg)
+        varname = ctx.varnames[op_arg]
+        result = Load(varname)
         ctx.stack.append(result)
 
 

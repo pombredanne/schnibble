@@ -167,6 +167,7 @@ class UnemitterContext(object):
         if not isinstance(code, types.CodeType):
             raise TypeError("code is not a CodeType")
         self.stack = []
+        self.varnames = code.co_varnames
         self.locals = [None] * code.co_nlocals
         self.retval = None
 

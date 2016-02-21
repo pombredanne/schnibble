@@ -140,14 +140,14 @@ class AnalyzerTests(TestCase):
     def test_unemit_Load_Return(self):
         fn = lambda x: x
         ctx = unemit(fn.__code__, Py27Op)
-        self.assertEqual(ctx.retval, Return(Load(0)))
+        self.assertEqual(ctx.retval, Return(Load('x')))
 
     def test_unemit_Load_Load_Add_Return(self):
         fn = lambda a, b: a + b
         ctx = unemit(fn.__code__, Py27Op)
-        self.assertEqual(ctx.retval, Return(Add(Load(0), Load(1))))
+        self.assertEqual(ctx.retval, Return(Add(Load('a'), Load('b'))))
 
     def test_unemit_Load_Load_Subtract_Return(self):
         fn = lambda a, b: a - b
         ctx = unemit(fn.__code__, Py27Op)
-        self.assertEqual(ctx.retval, Return(Subtract(Load(0), Load(1))))
+        self.assertEqual(ctx.retval, Return(Subtract(Load('a'), Load('b'))))
