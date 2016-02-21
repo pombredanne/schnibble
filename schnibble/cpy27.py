@@ -27,6 +27,10 @@ class UNARY_NEGATIVE(Py27Op):
 
     stack = common.dec_inc(-1, +1)
 
+    @classmethod
+    def simulate(cls, ctx, op_arg):
+        ctx.stack.append(Neg(ctx.stack.pop()))
+
 
 @Py27Op.register(124)
 class LOAD_FAST(Py27Op):
@@ -35,12 +39,23 @@ class LOAD_FAST(Py27Op):
     has_arg = True
     stack = common.dec_inc(-0, +1)
 
+    @classmethod
+    def simulate(cls, ctx, op_arg):
+        ctx.stack.append(Load(op_arg))
+
 
 @Py27Op.register(23)
 class BINARY_ADD(Py27Op):
     """Add two topmost arguments from the stack."""
 
     stack = common.dec_inc(-2, +1)
+
+    @classmethod
+    def simulate(cls, ctx, op_arg):
+        b = ctx.stack.pop()
+        a = ctx.stack.pop()
+        result = Add(a, b)
+        ctx.stack.append(result)
 
 
 @Py27Op.register(24)
@@ -49,12 +64,23 @@ class BINARY_SUBTRACT(Py27Op):
 
     stack = common.dec_inc(-2, +1)
 
+    @classmethod
+    def simulate(cls, ctx, op_arg):
+        b = ctx.stack.pop()
+        a = ctx.stack.pop()
+        result = Subtract(a, b)
+        ctx.stack.append(result)
+
 
 @Py27Op.register(83)
 class RETURN_VALUE(Py27Op):
     """Pop one value and return it."""
 
     stack = common.dec_inc(-1, +0)
+
+    @classmethod
+    def simulate(cls, ctx, op_arg):
+        ctx.retval = Return(ctx.stack.pop())
 
 
 class OperationNode(common.Emittable):

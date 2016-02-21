@@ -25,6 +25,13 @@ class BaseOp(object):
         """Check if given operation code is valid."""
 
     @classmethod
+    @abc.abstractmethod
+    def simulate(cls, ctx, op_arg):
+        """Simulate """
+        raise NotImplementedError(
+            "simlulation of {!r} is not implemented".format(cls.__name__))
+
+    @classmethod
     def register(cls, op_code):
         """Decorator for registering instruction classes."""
         if not cls.is_valid_op_code(op_code):
