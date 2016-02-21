@@ -19,6 +19,10 @@ def co(f):
     return [ord(b) for b in f.__code__.co_code]
 
 
+def forPy27(func):
+    return skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
+
+
 class EmitterTests(TestCase):
 
     def test_Neg(self):
@@ -69,25 +73,25 @@ class EmitterTests(TestCase):
         self.assertEqual(ctx.stack_usage(), (0, 0, 2))
         self.assertTrue(ctx.is_valid_stack(), True)
 
-    @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
+    @forPy27
     def test_neg_sanity(self):
         self.assertEqual(
             en(Return(Neg(Load(0)))),
             co(lambda a: -a))
 
-    @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
+    @forPy27
     def test_add_sanity(self):
         self.assertEqual(
             en(Return(Add(Load(0), Load(1)))),
             co(lambda a, b: a + b))
 
-    @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
+    @forPy27
     def test_sub_sanity(self):
         self.assertEqual(
             en(Return(Sub(Load(0), Load(1)))),
             co(lambda a, b: a - b))
 
-    @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
+    @forPy27
     def test_it_really_works(self):
         ctx = emit([Function(('a', 'b'), [
             Return(Add(Load('a'), Load('b')))])])
