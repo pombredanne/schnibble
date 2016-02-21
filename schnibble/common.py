@@ -1,6 +1,7 @@
 """Common code, independent of target Python version."""
 import array
 import abc
+import types
 import collections
 
 #: Decrement-increment pair
@@ -131,3 +132,20 @@ def iter_ops(code, op_cls):
             yield (op, arg)
         else:
             yield (op, None)
+
+
+class UnemitterContext(object):
+
+    def __init__(self, code):
+        if not isinstance(code, types.CodeType):
+            raise TypeError("code is not a CodeType")
+        self.stack = []
+        self.locals = [None] * code.co_nlocals
+        self.retval = None
+
+
+def unemit(code, op_cls):
+    ctx = UnemitterContext(code)
+    for op, op_arg in iter_ops(code, op_cls):
+        op.simulate(ctx, op_arg)
+    return ctx
