@@ -27,7 +27,20 @@ class BaseOp(object):
     @classmethod
     @abc.abstractmethod
     def simulate(cls, ctx, op_arg):
-        """Simulate """
+        """
+        Simulate execution of the operation.
+
+        :param ctx:
+            The UnemitterContext with the state of the smimulation
+        :param op_arg:
+            Argument of the operation. This is always the raw 16-bit integer
+            argument of the operation as it apperas in the byte-code.
+            If the operation has no argument then None is passed.
+
+        Simulation uses :class:`UnemitterContext` to "execute" the instruction
+        in an abstract manner. Executed code re-constructs the graph of nodes
+        that would compile to the same code.
+        """
         raise NotImplementedError(
             "simlulation of {!r} is not implemented".format(cls.__name__))
 
@@ -142,8 +155,15 @@ def iter_ops(code, op_cls):
 
 
 class UnemitterContext(object):
+    """Context used for simulation during :func:`unemit()`."""
 
     def __init__(self, code):
+        """
+        Initialize the unemitter context for the given code object.
+
+        :param code:
+            Code object used as a reference for lookaside tables.
+        """
         if not isinstance(code, types.CodeType):
             raise TypeError("code is not a CodeType")
         self.stack = []
@@ -152,6 +172,16 @@ class UnemitterContext(object):
 
 
 def unemit(code, op_cls):
+    """
+    Analyze a code object and re-create operation nodes.
+
+    :param code:
+        A code object as stored in __code__ of functions.A
+    :param op_cls:
+        Base class for the instruction set.
+
+    At present please use the :class:`Py27Op` here.
+    """
     ctx = UnemitterContext(code)
     for op, op_arg in iter_ops(code, op_cls):
         op.simulate(ctx, op_arg)

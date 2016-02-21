@@ -29,6 +29,7 @@ class UNARY_NEGATIVE(Py27Op):
 
     @classmethod
     def simulate(cls, ctx, op_arg):
+        """Simulate execution of the operation."""
         ctx.stack.append(Neg(ctx.stack.pop()))
 
 
@@ -41,7 +42,10 @@ class LOAD_FAST(Py27Op):
 
     @classmethod
     def simulate(cls, ctx, op_arg):
-        ctx.stack.append(Load(op_arg))
+        """Simulate execution of the operation."""
+        # TODO: resolve op_arg to a symbolic name.
+        result = Load(op_arg)
+        ctx.stack.append(result)
 
 
 @Py27Op.register(23)
@@ -52,6 +56,7 @@ class BINARY_ADD(Py27Op):
 
     @classmethod
     def simulate(cls, ctx, op_arg):
+        """Simulate execution of the operation."""
         b = ctx.stack.pop()
         a = ctx.stack.pop()
         result = Add(a, b)
@@ -66,6 +71,7 @@ class BINARY_SUBTRACT(Py27Op):
 
     @classmethod
     def simulate(cls, ctx, op_arg):
+        """Simulate execution of the operation."""
         b = ctx.stack.pop()
         a = ctx.stack.pop()
         result = Subtract(a, b)
@@ -80,6 +86,7 @@ class RETURN_VALUE(Py27Op):
 
     @classmethod
     def simulate(cls, ctx, op_arg):
+        """Simulate execution of the operation."""
         ctx.retval = Return(ctx.stack.pop())
 
 
@@ -105,21 +112,23 @@ class OperationNode(common.Emittable):
             self.args = args
 
     def __eq__(self, other):
+        """Compare OperationNode with another object."""
         if type(other) != type(self):
             return False
         return self.__dict__ == other.__dict__
 
     def __repr__(self):
+        """Compute the representation of an OperationNode."""
         if self.op.has_arg:
             return "{}({!r}{})".format(
                 self.__class__.__name__, self.arg,
                 ', ' + ', '.join([repr(arg) for arg in self.args])
                 if self.args else '')
         else:
-            return "{}({})".format(self.__class__.__name__,
+            return "{}({})".format(
+                self.__class__.__name__,
                 ', '.join([repr(arg) for arg in self.args])
                 if self.args else '')
-
 
     def emit(self, ctx):
         """Emit instructions to the specified EmitterContext."""
