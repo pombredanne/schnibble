@@ -3,7 +3,7 @@ import sys
 import types
 from unittest import TestCase, skipIf
 
-from schnibble.cpy27 import Load, Add, Return, Function
+from schnibble.cpy27 import Load, Add, Sub, Return, Function
 from schnibble.common import emit, dec_inc
 
 
@@ -42,6 +42,14 @@ class EmitterTests(TestCase):
         self.assertEqual(ctx.stack_usage(), (-2, -1, 0))
         self.assertFalse(ctx.is_valid_stack())
 
+    def test_Sub(self):
+        ctx = emit([Sub()])
+        # XXX: this should not be allowed in practice
+        self.assertEqual(ctx.buf.tolist(), [24])
+        self.assertEqual(ctx.stack_changes, [dec_inc(-2, +1)])
+        self.assertEqual(ctx.stack_usage(), (-2, -1, 0))
+        self.assertFalse(ctx.is_valid_stack())
+
     def test_Function(self):
         ctx = emit([Function(('a', 'b'), [Return(Add(Load('a'), Load('b')))])])
         self.assertEqual(ctx.buf.tolist(), [124, 0, 0, 124, 1, 0, 23, 83])
@@ -56,10 +64,17 @@ class EmitterTests(TestCase):
         self.assertTrue(ctx.is_valid_stack(), True)
 
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
-    def test_sanity(self):
+    def test_add_sanity(self):
         self.assertEqual(
             en(Return(Add(Load(0), Load(1)))),
             co(lambda a, b: a + b))
+
+    @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
+    def test_sub_sanity(self):
+        self.assertEqual(
+            en(Return(Sub(Load(0), Load(1)))),
+            co(lambda a, b: a - b))
+
 
     @skipIf(sys.version_info[:2] != (2, 7), "specific to Python 2.7")
     def test_it_really_works(self):

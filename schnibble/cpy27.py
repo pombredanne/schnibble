@@ -35,6 +35,13 @@ class BINARY_ADD(Py27Op):
     stack = common.dec_inc(-2, +1)
 
 
+@Py27Op.register(24)
+class BINARY_SUBTRACT(Py27Op):
+    """Subtract two topmost arguments from the stack."""
+
+    stack = common.dec_inc(-2, +1)
+
+
 @Py27Op.register(83)
 class RETURN_VALUE(Py27Op):
     """Pop one value and return it."""
@@ -100,6 +107,12 @@ class Add(OperationNode):
     op = BINARY_ADD
 
 
+class Sub(OperationNode):
+    """Binary subtraction node."""
+
+    op = BINARY_SUBTRACT
+
+
 class Return(OperationNode):
     """Function return node."""
 
@@ -119,4 +132,3 @@ class Load(OperationNode):
             return ctx.local_index(arg)
         else:
             raise TypeError("arg is {!r}".format(arg))
-
