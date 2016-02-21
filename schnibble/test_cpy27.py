@@ -4,7 +4,9 @@ import types
 from unittest import TestCase, skipIf
 
 from schnibble.cpy27 import Neg, Load, Add, Sub, Return, Function
-from schnibble.common import emit, dec_inc
+from schnibble.cpy27 import LOAD_FAST, RETURN_VALUE
+from schnibble.cpy27 import Py27Op
+from schnibble.common import emit, iter_ops, dec_inc
 
 
 def en(n):
@@ -125,3 +127,12 @@ class EmitterTests(TestCase):
         self.assertEqual(add(1, 2), 3)
         self.assertEqual(add("hello", " world"), "hello world")
         self.assertEqual(add(['foo'], ['bar']), ['foo', 'bar'])
+
+
+class AnalyzerTests(TestCase):
+
+    def test_smoke(self):
+        fn = lambda x: x
+        self.assertEqual(
+            list(iter_ops(fn.__code__, Py27Op)),
+            [(LOAD_FAST, 0), (RETURN_VALUE,)])

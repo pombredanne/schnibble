@@ -114,3 +114,19 @@ def emit(tree):
             raise TypeError("node: {!r} is not Emittable".format(node))
         node.emit(ctx)
     return ctx
+
+
+def iter_ops(code, op_cls):
+    """Analyze code and create a tree of nodes."""
+    co_code = code.co_code
+    i = 0
+    while i < len(co_code):
+        op_code = ord(co_code[i])
+        i += 1
+        op = op_cls.by_op_code(op_code)
+        if op.has_arg:
+            arg = ord(co_code[i]) + ord(co_code[i + 1]) << 8
+            i += 2
+            yield (op, arg)
+        else:
+            yield (op,)
