@@ -125,7 +125,8 @@ def iter_ops(code, op_cls):
         i += 1
         op = op_cls.by_op_code(op_code)
         if op.has_arg:
-            arg = ord(co_code[i]) + ord(co_code[i + 1]) << 8
+            arg = ord(co_code[i])
+            arg += ord(co_code[i + 1]) << 8
             i += 2
             yield (op, arg)
         else:
