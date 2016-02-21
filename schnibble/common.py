@@ -130,4 +130,4 @@ def iter_ops(code, op_cls):
             i += 2
             yield (op, arg)
         else:
-            yield (op,)
+            yield (op, None)

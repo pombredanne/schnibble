@@ -135,4 +135,4 @@ class AnalyzerTests(TestCase):
         fn = lambda x: x
         self.assertEqual(
             list(iter_ops(fn.__code__, Py27Op)),
-            [(LOAD_FAST, 0), (RETURN_VALUE,)])
+            [(LOAD_FAST, 0), (RETURN_VALUE, None)])
