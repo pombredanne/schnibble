@@ -42,7 +42,12 @@ class BaseOp(object):
 
 
 class EmitterContext(object):
-    """State of ongoing code emission."""
+    """
+    State of ongoing code emission.
+
+    The context stores data neccessary to construct a single code object.
+    Nested objects can be created (e.g. for function or class definition).
+    """
 
     def __init__(self):
         """Initialize context with empty code and stack changes buffers."""
