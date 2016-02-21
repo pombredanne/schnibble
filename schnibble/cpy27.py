@@ -153,7 +153,7 @@ class Add(OperationNode):
     op = BINARY_ADD
 
 
-class Sub(OperationNode):
+class Subtract(OperationNode):
     """Binary subtraction node."""
 
     op = BINARY_SUBTRACT

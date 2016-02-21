@@ -3,7 +3,7 @@ import sys
 import types
 from unittest import TestCase, skipIf
 
-from schnibble.cpy27 import Neg, Load, Add, Sub, Return, Function
+from schnibble.cpy27 import Neg, Load, Add, Subtract, Return, Function
 from schnibble.cpy27 import LOAD_FAST, RETURN_VALUE
 from schnibble.cpy27 import Py27Op
 from schnibble.common import emit, iter_ops, dec_inc
@@ -55,7 +55,7 @@ class EmitterTests(TestCase):
         self.assertFalse(ctx.is_valid_stack())
 
     def test_Sub(self):
-        ctx = emit([Sub()])
+        ctx = emit([Subtract()])
         # XXX: this should not be allowed in practice
         self.assertEqual(ctx.buf.tolist(), [24])
         self.assertEqual(ctx.stack_changes, [dec_inc(-2, +1)])
@@ -90,7 +90,7 @@ class EmitterTests(TestCase):
     @forPy27
     def test_sub_sanity(self):
         self.assertEqual(
-            en(Return(Sub(Load(0), Load(1)))),
+            en(Return(Subtract(Load(0), Load(1)))),
             co(lambda a, b: a - b))
 
     @forPy27
