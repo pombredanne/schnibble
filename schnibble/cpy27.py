@@ -42,8 +42,8 @@ class RETURN_VALUE(Py27Op):
     stack = common.dec_inc(-1, +0)
 
 
-class Node(common.Emittable):
-    """Base class for computation nodes."""
+class OperationNode(common.Emittable):
+    """Base class for nodes associated with operations."""
 
     def __init__(self, *args):
         """
@@ -94,19 +94,19 @@ class Function(common.Emittable):
         ctx.pop()
 
 
-class Add(Node):
+class Add(OperationNode):
     """Binary addition node."""
 
     op = BINARY_ADD
 
 
-class Return(Node):
+class Return(OperationNode):
     """Function return node."""
 
     op = RETURN_VALUE
 
 
-class Load(Node):
+class Load(OperationNode):
     """Local variable load node."""
 
     op = LOAD_FAST
