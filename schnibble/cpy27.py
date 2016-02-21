@@ -95,12 +95,32 @@ class OperationNode(common.Emittable):
 
 
 class Function(common.Emittable):
+    """Function definition node."""
 
     def __init__(self, args, progn):
+        """
+        Initialize a function definition node.
+
+        :param args:
+            List of function arugment names.
+        :param progn:
+            List of computaion nodes executed in function body.
+        """
         self.args = args
         self.progn = progn
 
     def emit(self, ctx):
+        """
+        Emit instructions to the specified EmitterContext.
+
+        :param ctx:
+            The EmitterContext associated with the translation.
+
+        Functions create a new element on the context stack
+        (currently not implemented). Each function argument is defined as
+        a local variable. All of the nodes in the function are emitted in
+        sequence.
+        """
         ctx.push()
         for arg in self.args:
             ctx.add_local(arg)
@@ -158,8 +178,8 @@ class Load(OperationNode):
         Two types of argument can be used integer indexes or strings. Using
         indeger indexes doesn't guarantee that the program will be correct but
         has the advantage of being useful in short test code fragments.
-        Using variable names requires coordination with the context. In practice
-        each variable needs to be declared with
+        Using variable names requires coordination with the context.
+        In practice each variable needs to be declared with
         :meth:`schnibble.common.EmitterContext.add_local()`.
         """
         if isinstance(arg, int):

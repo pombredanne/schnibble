@@ -5,7 +5,9 @@ import collections
 
 #: Decrement-increment pair
 dec_inc = collections.namedtuple("dec_inc", "dec inc")
-stack_usage = collections.namedtuple("stack_usage", "min_size final_size max_size")
+stack_usage = collections.namedtuple(
+    "stack_usage", "min_size final_size max_size")
+
 
 class BaseOp(object):
     """Base class for all Python bytecode operations."""
@@ -49,20 +51,23 @@ class EmitterContext(object):
         self.local_vars = []
 
     def push(self):
-        pass
+        """Push a new context on the stac."""
 
     def pop(self):
-        pass
+        """Pop the last context from the stack."""
 
     def add_local(self, name):
-        self.local_vars.append(name)
+        """
+        Add a local variable to the current context.
 
-    def local_index(self, name):
-        return self.local_vars.index(name)
+        :param name:
+            Name of the local variable.
+        """
+        self.local_vars.append(name)
 
     def stack_usage(self):
         """
-        Analyze stack usage:
+        Analyze stack usage.
 
         :returns:
             Tuple ``(min_size, final_size, max_size)`` that represents
