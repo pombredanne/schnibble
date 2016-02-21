@@ -12,6 +12,7 @@ class Py27Op(common.BaseOp):
         6, 7, 8, 14, 16, 17, 18, 34, 35, 36, 37, 38, 39,
         44, 45, 46, 47, 48, 49, 69, 117, 118, 123, 127,
         128, 129, 138, 139, 144,
+        # NOTE: last valid instruction is 147
     }
 
     @classmethod
