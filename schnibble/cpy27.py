@@ -90,6 +90,7 @@ class OperationNode(common.Emittable):
 
     @classmethod
     def translate_arg(cls, ctx, arg):
+        """Translate operation argument to integer encoded in the bytecode."""
         return arg
 
 
@@ -139,9 +140,38 @@ class Load(OperationNode):
 
     @classmethod
     def translate_arg(cls, ctx, arg):
+        """
+        Translate operation argument to integer encoded in the bytecode.
+
+        :param ctx:
+            The EmitterContext associated with the translation.
+        :param arg:
+            Argument to the LOAD_FAST instruction.
+        :raises ValueError:
+            When the argument is an integer beyond the 16bit range of Python
+            local variables.
+        :raises ValueError:
+            When the argument is a string referring to unknown local variable.
+        :raises TypeError:
+            When the argument is of type other than string or int.
+
+        Two types of argument can be used integer indexes or strings. Using
+        indeger indexes doesn't guarantee that the program will be correct but
+        has the advantage of being useful in short test code fragments.
+        Using variable names requires coordination with the context. In practice
+        each variable needs to be declared with
+        :meth:`schnibble.common.EmitterContext.add_local()`.
+        """
         if isinstance(arg, int):
+            if arg not in range(0xFFFF + 1):
+                raise ValueError(
+                    "Load beyond range of 16bit variable index: {!r}".format(
+                        arg))
             return arg
         elif isinstance(arg, str):
-            return ctx.local_index(arg)
+            if arg not in ctx.local_vars:
+                raise ValueError(
+                    "Load from undeclared local variable: {!r}", arg)
+            return ctx.local_vars.index(arg)
         else:
             raise TypeError("arg is {!r}".format(arg))
