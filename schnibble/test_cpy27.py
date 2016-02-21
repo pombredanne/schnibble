@@ -6,7 +6,7 @@ from unittest import TestCase, skipIf
 from schnibble.cpy27 import Neg, Load, Add, Subtract, Return, Function
 from schnibble.cpy27 import LOAD_FAST, RETURN_VALUE
 from schnibble.cpy27 import Py27Op
-from schnibble.common import emit, iter_ops, dec_inc
+from schnibble.common import emit, unemit, iter_ops, dec_inc
 
 
 def en(n):
@@ -136,3 +136,18 @@ class AnalyzerTests(TestCase):
         self.assertEqual(
             list(iter_ops(fn.__code__, Py27Op)),
             [(LOAD_FAST, 0), (RETURN_VALUE, None)])
+
+    def test_unemit_Load_Return(self):
+        fn = lambda x: x
+        ctx = unemit(fn.__code__, Py27Op)
+        self.assertEqual(ctx.retval, Return(Load(0)))
+
+    def test_unemit_Load_Load_Add_Return(self):
+        fn = lambda a, b: a + b
+        ctx = unemit(fn.__code__, Py27Op)
+        self.assertEqual(ctx.retval, Return(Add(Load(0), Load(1))))
+
+    def test_unemit_Load_Load_Subtract_Return(self):
+        fn = lambda a, b: a - b
+        ctx = unemit(fn.__code__, Py27Op)
+        self.assertEqual(ctx.retval, Return(Subtract(Load(0), Load(1))))
