@@ -78,6 +78,23 @@ class OperationNode(common.Emittable):
         else:
             self.args = args
 
+    def __eq__(self, other):
+        if type(other) != type(self):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        if self.op.has_arg:
+            return "{}({!r}{})".format(
+                self.__class__.__name__, self.arg,
+                ', ' + ', '.join([repr(arg) for arg in self.args])
+                if self.args else '')
+        else:
+            return "{}({})".format(self.__class__.__name__,
+                ', '.join([repr(arg) for arg in self.args])
+                if self.args else '')
+
+
     def emit(self, ctx):
         """Emit instructions to the specified EmitterContext."""
         for child in self.args:
