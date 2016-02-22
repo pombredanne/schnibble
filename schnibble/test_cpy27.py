@@ -1,7 +1,7 @@
 """Unit tests for cpy27."""
 import sys
 import types
-from unittest import TestCase, skipIf
+from unittest import TestCase, skipIf, expectedFailure
 
 from schnibble.cpy27 import Neg, Load, Add, Subtract, Return, Function
 from schnibble.cpy27 import LOAD_FAST, RETURN_VALUE
@@ -151,3 +151,15 @@ class AnalyzerTests(TestCase):
         fn = lambda a, b: a - b
         ctx = unemit(fn.__code__, Py27Op)
         self.assertEqual(ctx.retval, Return(Subtract(Load('a'), Load('b'))))
+
+
+class OptimizerTests(TestCase):
+
+    @expectedFailure
+    def test_textbook_example(self):
+        def fn(z):
+            x = 3 + 6
+            y = x - 5
+            return z * y
+        # NOTE: this doesn't work yet but the goal is to make it work :)
+        ctx = unemit(fn.__code__, Py27Op)
