@@ -58,8 +58,23 @@ class BaseOp(object):
 
     @classmethod
     def by_op_code(cls, op_code):
-        """Find instruction given its opcode."""
-        return cls._by_op[op_code]
+        """
+        Find instruction given its opcode.
+
+        :param op_code:
+            Code of the instruction
+        :raises ValueError:
+            If the ``op_code`` is not a valid instruction code.
+        :raises NotImplementedError:
+            If the instruction is not implemented yet.
+        """
+        if not cls.is_valid_op_code(op_code):
+            raise ValueError("{} is not a valid op code".format(op_code))
+        op_cls = cls._by_op[op_code]
+        if op_cls is None:
+            raise NotImplementedError(
+                "instruction {} is not implemented".format(op_code))
+        return op_cls
 
 
 class EmitterContext(object):
