@@ -4,6 +4,7 @@ import abc
 import types
 import collections
 
+
 #: Decrement-increment pair
 dec_inc = collections.namedtuple("dec_inc", "dec inc")
 stack_usage = collections.namedtuple(
@@ -77,7 +78,7 @@ class BaseOp(object):
         return op_cls
 
 
-class EmitterContext(object):
+class BaseEmitterContext(object):
     """
     State of ongoing code emission.
 
@@ -85,11 +86,28 @@ class EmitterContext(object):
     Nested objects can be created (e.g. for function or class definition).
     """
 
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self):
         """Initialize context with empty code and stack changes buffers."""
         self.buf = array.array('B')
         self.stack_changes = []
         self.local_vars = []
+        self.flags = 0
+        # NOTE: the first element of the constant pool is the docstring
+        # but since our functions don't support this yet, let's just stick
+        # None in there. This is consistent with runtime behavior.
+        self.consts = (None,)
+
+    def emit(self, tree):
+        """Emit instruction from a tree of Emittable objets."""
+        if not isinstance(tree, list):
+            raise TypeError("tree is not a list")
+        for node in tree:
+            if not isinstance(node, Emittable):
+                raise TypeError("node: {!r} is not Emittable".format(node))
+            node.emit(self)
+        return self
 
     def push(self):
         """Push a new context on the stac."""
@@ -104,7 +122,18 @@ class EmitterContext(object):
         :param name:
             Name of the local variable.
         """
-        self.local_vars.append(name)
+        if name not in self.local_vars:
+            self.local_vars.append(name)
+
+    def add_const(self, value):
+        """
+        Add a const value to the current context.
+
+        :param value:
+            The value to add to the constant pool.
+        """
+        if value not in self.consts:
+            self.consts += (value,)
 
     def stack_usage(self):
         """
@@ -129,6 +158,10 @@ class EmitterContext(object):
         usage = self.stack_usage()
         return usage.min_size >= 0 and usage.final_size == 0
 
+    @abc.abstractmethod
+    def make_code(self, filename="?", name="?", firstlineno=1, lnotab=''):
+        """Create a code object out of what is in the context."""
+
 
 class Emittable(object):
     """Interface of objects that participate in code emission."""
@@ -138,18 +171,6 @@ class Emittable(object):
     @abc.abstractmethod
     def emit(self, ctx):
         """Emit instructions to the specified EmitterContext."""
-
-
-def emit(tree):
-    """Emit instruction from a tree of Emittable objets."""
-    ctx = EmitterContext()
-    if not isinstance(tree, list):
-        raise TypeError("tree is not a list")
-    for node in tree:
-        if not isinstance(node, Emittable):
-            raise TypeError("node: {!r} is not Emittable".format(node))
-        node.emit(ctx)
-    return ctx
 
 
 def iter_ops(code, op_cls):
@@ -183,6 +204,7 @@ class UnemitterContext(object):
             raise TypeError("code is not a CodeType")
         self.stack = []
         self.varnames = code.co_varnames
+        self.consts = code.co_consts
         self.locals = [None] * code.co_nlocals
         self.retval = None
 
