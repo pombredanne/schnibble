@@ -21,31 +21,35 @@ FLAG_UNICODE_LITERALS = 0x020000
 class Py27EmitterContext(common.BaseEmitterContext):
     """Code emitter context specific to CPytyhon 2.7."""
 
-    def make_code(self, filename="?", name="?", firstlineno=1, lnotab=''):
+    def make_code(self, builder, filename="?", name="?", firstlineno=1,
+                  lnotab=''):
         """Create a code object out of what is in the context."""
         # TODO: add nodes for setting filename, function name and the like
         # so that make_code() can just work without any extra knowledge and
         # no capacity is lost.
-        if not self.is_valid_stack():
+        stack_usage = builder.stack_usage()
+        if not builder.is_valid_stack():
             raise ValueError("cannot make code, stack is not balanced")
         # code(argcount, nlocals, stacksize, flags, codestring, constants,
         #      names, varnames, filename, name, firstlineno, lnotab,
         #      freevars[, cellvars]])
-        argcount = len(self.local_vars)
-        nlocals = len(self.local_vars)  # FIXME: differentiate!
-        stacksize = self.stack_usage().max_size
+        argcount = len(builder.args)
+        nlocals = len(builder.vars)
+        stacksize = stack_usage.max_size
         # FIXME: understand real flags
-        codestring = self.buf.tostring()
-        constants = self.consts
+        codestring = builder.buf.tostring()
+        constants = tuple(builder.consts)
         names = ()  # FIXME: dummy
-        varnames = tuple(self.local_vars)
+        varnames = tuple(builder.vars)
         freevars = ()  # FIXME: dummy
         cellvars = ()  # FIXME: dummy
-        flags = self.flags
+        flags = builder.flags
         flags |= FLAG_OPTIMIZED
         flags |= FLAG_NEWLOCALS
         if not freevars:
             flags |= FLAG_NOFREE
+        if builder.level >= 1:
+            flags |= FLAG_NESTED
         return types.CodeType(
             argcount, nlocals, stacksize, flags, codestring,
             constants, names, varnames, filename, name, firstlineno, lnotab,
@@ -112,6 +116,22 @@ class LOAD_FAST(Py27Op):
         ctx.stack.append(result)
 
 
+@Py27Op.register(125)
+class STORE_FAST(Py27Op):
+    """Store a value from the stack into a local variable."""
+
+    has_arg = True
+    stack = common.dec_inc(-1, +0)
+
+    @classmethod
+    def simulate(cls, ctx, op_arg):
+        """Simulate execution of the operation."""
+        varname = ctx.varnames[op_arg]
+        value = ctx.stack.pop()
+        result = Store(varname, value)
+        ctx.locals[op_arg] = result
+
+
 @Py27Op.register(23)
 class BINARY_ADD(Py27Op):
     """Add two topmost arguments from the stack."""
@@ -171,9 +191,9 @@ class OperationNode(common.Emittable):
         """
         if self.op.has_arg:
             self.arg = args[0]
-            self.args = args[1:]
+            self.children = args[1:]
         else:
-            self.args = args
+            self.children = args
 
     def __eq__(self, other):
         """Compare OperationNode with another object."""
@@ -186,24 +206,24 @@ class OperationNode(common.Emittable):
         if self.op.has_arg:
             return "{}({!r}{})".format(
                 self.__class__.__name__, self.arg,
-                ', ' + ', '.join([repr(arg) for arg in self.args])
-                if self.args else '')
+                ', ' + ', '.join([repr(child) for child in self.children])
+                if self.children else '')
         else:
             return "{}({})".format(
                 self.__class__.__name__,
-                ', '.join([repr(arg) for arg in self.args])
-                if self.args else '')
+                ', '.join([repr(child) for child in self.children])
+                if self.children else '')
 
     def emit(self, ctx):
         """Emit instructions to the specified EmitterContext."""
-        for child in self.args:
+        for child in self.children:
             child.emit(ctx)
-        ctx.stack_changes.append(self.op.stack)
-        ctx.buf.append(self.op.code)
+        ctx.current_builder.stack_changes.append(self.op.stack)
+        ctx.current_builder.buf.append(self.op.code)
         if self.op.has_arg:
             arg = self.translate_arg(ctx, self.arg)
-            ctx.buf.append(arg & 255)
-            ctx.buf.append(arg >> 8)
+            ctx.current_builder.buf.append(arg & 255)
+            ctx.current_builder.buf.append(arg >> 8)
 
     @classmethod
     def translate_arg(cls, ctx, arg):
@@ -230,13 +250,13 @@ class Flags(common.Emittable):
 
     def emit(self, ctx):
         """Alter flags in the specificed EmitterContext."""
-        ctx.flags |= self.extra_flags
+        ctx.current_builder.flags |= self.extra_flags
 
 
 class Function(common.Emittable):
     """Function definition node."""
 
-    def __init__(self, args, progn):
+    def __init__(self, args, docstring, *progn):
         """
         Initialize a function definition node.
 
@@ -246,6 +266,7 @@ class Function(common.Emittable):
             List of computaion nodes executed in function body.
         """
         self.args = args
+        self.docstring = docstring
         self.progn = progn
 
     def emit(self, ctx):
@@ -260,9 +281,7 @@ class Function(common.Emittable):
         a local variable. All of the nodes in the function are emitted in
         sequence.
         """
-        ctx.push()
-        for arg in self.args:
-            ctx.add_local(arg)
+        ctx.push(self.args, self.docstring)
         for prog in self.progn:
             prog.emit(ctx)
         ctx.pop()
@@ -328,12 +347,78 @@ class Load(OperationNode):
                         arg))
             return arg
         elif isinstance(arg, str):
-            if arg not in ctx.local_vars:
+            if arg not in ctx.current_builder.vars:
                 raise ValueError(
                     "Load from undeclared local variable: {!r}", arg)
-            return ctx.local_vars.index(arg)
+            return ctx.current_builder.vars.index(arg)
         else:
             raise TypeError("arg is {!r}".format(arg))
+
+    def emit(self, ctx):
+        """
+        Emit instructions to the specified EmitterContext.
+
+        :param ctx:
+            The EmitterContext associated with the translation.
+        """
+        if isinstance(self.arg, str):
+            ctx.current_builder.add_local(self.arg)
+        super(Load, self).emit(ctx)
+
+
+class Store(OperationNode):
+    """Local variable store node."""
+
+    op = STORE_FAST
+
+    @classmethod
+    def translate_arg(cls, ctx, arg):
+        """
+        Translate operation argument to integer encoded in the bytecode.
+
+        :param ctx:
+            The EmitterContext associated with the translation.
+        :param arg:
+            Argument to the LOAD_FAST instruction.
+        :raises ValueError:
+            When the argument is an integer beyond the 16bit range of Python
+            local variables.
+        :raises ValueError:
+            When the argument is a string referring to unknown local variable.
+        :raises TypeError:
+            When the argument is of type other than string or int.
+
+        Two types of argument can be used integer indexes or strings. Using
+        indeger indexes doesn't guarantee that the program will be correct but
+        has the advantage of being useful in short test code fragments.
+        Using variable names requires coordination with the context.
+        In practice each variable needs to be declared with
+        :meth:`schnibble.common.EmitterContext.add_local()`.
+        """
+        if isinstance(arg, int):
+            if arg not in range(0xFFFF + 1):
+                raise ValueError(
+                    "Store beyond range of 16bit variable index: {!r}".format(
+                        arg))
+            return arg
+        elif isinstance(arg, str):
+            if arg not in ctx.current_builder.vars:
+                raise ValueError(
+                    "Store to undeclared local variable: {!r}", arg)
+            return ctx.current_builder.vars.index(arg)
+        else:
+            raise TypeError("arg is {!r}".format(arg))
+
+    def emit(self, ctx):
+        """
+        Emit instructions to the specified EmitterContext.
+
+        :param ctx:
+            The EmitterContext associated with the translation.
+        """
+        if isinstance(self.arg, str):
+            ctx.current_builder.add_local(self.arg)
+        super(Store, self).emit(ctx)
 
 
 class Const(OperationNode):
@@ -351,7 +436,7 @@ class Const(OperationNode):
         :param arg:
             Argument to the LOAD_CONST instruction.
         """
-        return ctx.consts.index(arg)
+        return ctx.current_builder.consts.index(arg)
 
     def emit(self, ctx):
         """
@@ -360,5 +445,5 @@ class Const(OperationNode):
         :param ctx:
             The EmitterContext associated with the translation.
         """
-        ctx.add_const(self.arg)
+        ctx.current_builder.add_const(self.arg)
         super(Const, self).emit(ctx)

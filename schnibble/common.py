@@ -78,62 +78,31 @@ class BaseOp(object):
         return op_cls
 
 
-class BaseEmitterContext(object):
-    """
-    State of ongoing code emission.
+class FunctionBuilder(object):
+    """State of code emission of a specific function."""
 
-    The context stores data neccessary to construct a single code object.
-    Nested objects can be created (e.g. for function or class definition).
-    """
+    def __init__(self, args, docstring=None, level=0):
+        """
+        Initialize a new function builder.
 
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self):
-        """Initialize context with empty code and stack changes buffers."""
+        :param args:
+            Tuple with function argument names
+        :param docstring:
+            Optional function docstring
+        :param level:
+            Nesting level. Zero for-top level (module) functions.
+        """
+        assert isinstance(args, tuple)
+        assert all(isinstance(arg, str) for arg in args)
+        assert docstring is None or isinstance(docstring, str)
         self.buf = array.array('B')
         self.stack_changes = []
-        self.local_vars = []
+        # NOTE: vars is a subset of args
+        self.vars = list(args)
+        self.args = args
+        self.consts = [docstring]
         self.flags = 0
-        # NOTE: the first element of the constant pool is the docstring
-        # but since our functions don't support this yet, let's just stick
-        # None in there. This is consistent with runtime behavior.
-        self.consts = (None,)
-
-    def emit(self, tree):
-        """Emit instruction from a tree of Emittable objets."""
-        if not isinstance(tree, list):
-            raise TypeError("tree is not a list")
-        for node in tree:
-            if not isinstance(node, Emittable):
-                raise TypeError("node: {!r} is not Emittable".format(node))
-            node.emit(self)
-        return self
-
-    def push(self):
-        """Push a new context on the stac."""
-
-    def pop(self):
-        """Pop the last context from the stack."""
-
-    def add_local(self, name):
-        """
-        Add a local variable to the current context.
-
-        :param name:
-            Name of the local variable.
-        """
-        if name not in self.local_vars:
-            self.local_vars.append(name)
-
-    def add_const(self, value):
-        """
-        Add a const value to the current context.
-
-        :param value:
-            The value to add to the constant pool.
-        """
-        if value not in self.consts:
-            self.consts += (value,)
+        self.level = level  # nesting level
 
     def stack_usage(self):
         """
@@ -158,8 +127,88 @@ class BaseEmitterContext(object):
         usage = self.stack_usage()
         return usage.min_size >= 0 and usage.final_size == 0
 
+    def add_local(self, name):
+        """
+        Add a local variable to the current context.
+
+        :param name:
+            Name of the local variable.
+        """
+        if name not in self.vars:
+            self.vars.append(name)
+
+    def add_const(self, value):
+        """
+        Add a const value to the current context.
+
+        :param value:
+            The value to add to the constant pool.
+        """
+        if value not in self.consts:
+            self.consts.append(value)
+
+
+class BaseEmitterContext(object):
+    """
+    State of ongoing code emission.
+
+    The context stores data neccessary to construct a single code object.
+    Nested objects can be created (e.g. for function or class definition).
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        """Initialize context with empty code and stack changes buffers."""
+        self._incomplete = [FunctionBuilder((), None)]
+        self._complete = []
+
+    @property
+    def current_builder(self):
+        """Builder for the most recently pushed incomplete function."""
+        return self._incomplete[-1]
+
+    @property
+    def last_builder(self):
+        """Builder for the most recently completed function."""
+        try:
+            return self._complete[-1]
+        except IndexError:
+            raise Exception("There are no completed builders yet")
+
+    def push(self, args, docstring=None):
+        """Push a new builder on the stack."""
+        builder = FunctionBuilder(args, docstring, level=len(self._incomplete))
+        self._incomplete.append(builder)
+
+    def pop(self):
+        """Pop the last builder from the stack."""
+        if len(self._incomplete) == 1:
+            raise Exception("attempting to pop the initial builder")
+        builder = self._incomplete.pop()
+        self._complete.append(builder)
+        return builder
+
+    def emit(self, *nodes):
+        """Emit instruction from a tree of Emittable objets."""
+        for node in nodes:
+            if not isinstance(node, Emittable):
+                raise TypeError("node: {!r} is not Emittable".format(node))
+            node.emit(self)
+        return self
+
+    def emit_fragment(self, *nodes):
+        """Emit a code fragment (without a Function() node)."""
+        self.emit(*nodes)
+        if len(self._complete) > 0:
+            raise Exception("emit_fragment() when emit() was really expected")
+        self._complete.append(self._incomplete.pop())
+        self._incomplete.append(FunctionBuilder((), None))
+        return self
+
     @abc.abstractmethod
-    def make_code(self, filename="?", name="?", firstlineno=1, lnotab=''):
+    def make_code(self, builder, filename="?", name="?", firstlineno=1,
+                  lnotab=''):
         """Create a code object out of what is in the context."""
 
 

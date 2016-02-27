@@ -3,7 +3,8 @@ import sys
 import types
 from unittest import TestCase, skipIf, expectedFailure
 
-from schnibble.cpy27 import Neg, Const, Load, Add, Subtract, Return, Function
+from schnibble.cpy27 import Neg, Const, Load, Store, Add, Subtract, Return
+from schnibble.cpy27 import Function
 from schnibble.cpy27 import Flags, FLAG_NESTED
 from schnibble.cpy27 import LOAD_FAST, RETURN_VALUE
 from schnibble.cpy27 import Py27Op
@@ -12,11 +13,11 @@ from schnibble.common import unemit, iter_ops, dec_inc
 
 
 def en(n):
-    return Py27EmitterContext().emit([n]).buf.tolist()
+    return Py27EmitterContext().emit_fragment([n]).buf.tolist()
 
 
 def et(t):
-    return Py27EmitterContext().emit(t).buf.tolist()
+    return Py27EmitterContext().emit_fragment(t).buf.tolist()
 
 
 def co(f):
@@ -38,120 +39,122 @@ def code_props(code):
 class EmitterTests(TestCase):
 
     def test_Neg(self):
-        ctx = Py27EmitterContext().emit([Neg()])
-        self.assertEqual(ctx.buf.tolist(), [11])
-        self.assertEqual(ctx.stack_usage(), (-1, 0, 0))
-        self.assertFalse(ctx.is_valid_stack())
+        ctx = Py27EmitterContext().emit_fragment(Neg())
+        self.assertEqual(ctx.last_builder.buf.tolist(), [11])
+        self.assertEqual(ctx.last_builder.stack_usage(), (-1, 0, 0))
+        self.assertFalse(ctx.last_builder.is_valid_stack())
 
     def test_Const(self):
-        ctx = Py27EmitterContext().emit([Const("hi")])
-        self.assertEqual(ctx.buf.tolist(), [100, 1, 0])
-        self.assertEqual(ctx.stack_usage(), (0, 1, 1))
-        self.assertFalse(ctx.is_valid_stack())
+        ctx = Py27EmitterContext().emit_fragment(Const("hi"))
+        self.assertEqual(ctx.last_builder.buf.tolist(), [100, 1, 0])
+        self.assertEqual(ctx.last_builder.stack_usage(), (0, 1, 1))
+        self.assertFalse(ctx.last_builder.is_valid_stack())
 
     def test_Load(self):
-        ctx = Py27EmitterContext().emit([Load(0xAABB)])
-        self.assertEqual(ctx.buf.tolist(), [124, 0xBB, 0xAA])
-        self.assertEqual(ctx.stack_usage(), (0, 1, 1))
-        self.assertFalse(ctx.is_valid_stack())
+        ctx = Py27EmitterContext().emit_fragment(Load(0xAABB))
+        self.assertEqual(ctx.last_builder.buf.tolist(), [124, 0xBB, 0xAA])
+        self.assertEqual(ctx.last_builder.stack_usage(), (0, 1, 1))
+        self.assertFalse(ctx.last_builder.is_valid_stack())
+
+    def test_Store(self):
+        ctx = Py27EmitterContext().emit_fragment(Store(0xAABB))
+        self.assertEqual(ctx.last_builder.buf.tolist(), [125, 0xBB, 0xAA])
+        self.assertEqual(ctx.last_builder.stack_usage(), (-1, -1, 0))
+        self.assertFalse(ctx.last_builder.is_valid_stack())
 
     def test_Return(self):
-        ctx = Py27EmitterContext().emit([Return()])
-        self.assertEqual(ctx.buf.tolist(), [83])
-        self.assertEqual(ctx.stack_changes, [dec_inc(-1, +0)])
-        self.assertEqual(ctx.stack_usage(), (-1, -1, 0))
-        self.assertFalse(ctx.is_valid_stack())
+        ctx = Py27EmitterContext().emit_fragment(Return())
+        self.assertEqual(ctx.last_builder.buf.tolist(), [83])
+        self.assertEqual(ctx.last_builder.stack_changes, [dec_inc(-1, +0)])
+        self.assertEqual(ctx.last_builder.stack_usage(), (-1, -1, 0))
+        self.assertFalse(ctx.last_builder.is_valid_stack())
 
     def test_Add(self):
-        ctx = Py27EmitterContext().emit([Add()])
+        ctx = Py27EmitterContext().emit_fragment(Add())
         # XXX: this should not be allowed in practice
-        self.assertEqual(ctx.buf.tolist(), [23])
-        self.assertEqual(ctx.stack_changes, [dec_inc(-2, +1)])
-        self.assertEqual(ctx.stack_usage(), (-2, -1, 0))
-        self.assertFalse(ctx.is_valid_stack())
+        self.assertEqual(ctx.last_builder.buf.tolist(), [23])
+        self.assertEqual(ctx.last_builder.stack_changes, [dec_inc(-2, +1)])
+        self.assertEqual(ctx.last_builder.stack_usage(), (-2, -1, 0))
+        self.assertFalse(ctx.last_builder.is_valid_stack())
 
     def test_Sub(self):
-        ctx = Py27EmitterContext().emit([Subtract()])
+        ctx = Py27EmitterContext().emit_fragment(Subtract())
         # XXX: this should not be allowed in practice
-        self.assertEqual(ctx.buf.tolist(), [24])
-        self.assertEqual(ctx.stack_changes, [dec_inc(-2, +1)])
-        self.assertEqual(ctx.stack_usage(), (-2, -1, 0))
-        self.assertFalse(ctx.is_valid_stack())
-
-    def test_Function(self):
-        ctx = Py27EmitterContext().emit([
-            Function(('a', 'b'), [
-                    Return(Add(Load('a'), Load('b')))])])
-        self.assertEqual(ctx.buf.tolist(), [124, 0, 0, 124, 1, 0, 23, 83])
-        self.assertEqual(ctx.local_vars, ['a', 'b'])
+        self.assertEqual(ctx.last_builder.buf.tolist(), [24])
+        self.assertEqual(ctx.last_builder.stack_changes, [dec_inc(-2, +1)])
+        self.assertEqual(ctx.last_builder.stack_usage(), (-2, -1, 0))
+        self.assertFalse(ctx.last_builder.is_valid_stack())
 
     def test_smoke(self):
-        ctx = Py27EmitterContext().emit([Return(Add(Load(0), Load(1)))])
-        self.assertEqual(ctx.buf.tolist(), [124, 0, 0, 124, 1, 0, 23, 83])
-        self.assertEqual(ctx.stack_changes, [dec_inc(-0, +1), dec_inc(-0, +1),
-                                             dec_inc(-2, +1), dec_inc(-1, 0)])
-        self.assertEqual(ctx.stack_usage(), (0, 0, 2))
-        self.assertTrue(ctx.is_valid_stack(), True)
-
-    @forPy27
-    def test_neg_sanity(self):
+        ctx = Py27EmitterContext().emit_fragment(Return(Add(Load(0), Load(1))))
         self.assertEqual(
-            en(Return(Neg(Load(0)))),
-            co(lambda a: -a))
+            ctx.last_builder.buf.tolist(),
+            [124, 0, 0, 124, 1, 0, 23, 83])
+        self.assertEqual(
+            ctx.last_builder.stack_changes,
+            [dec_inc(-0, +1), dec_inc(-0, +1), dec_inc(-2, +1), dec_inc(-1, 0)])
+        self.assertEqual(ctx.last_builder.stack_usage(), (0, 0, 2))
+        self.assertTrue(ctx.last_builder.is_valid_stack(), True)
 
-    @forPy27
-    def test_const_sanity(self):
-        fn = lambda: "hi"
-        ctx = Py27EmitterContext().emit([
-            Flags(FLAG_NESTED),
-            Return(Const("hi"))
-        ])
-        self.assertEqual(ctx.buf.tostring(), fn.__code__.co_code)
-        self.assertEqual(ctx.consts, fn.__code__.co_consts)
+    def assertPerfectCode(self, fn, *nodes):
+        ctx = Py27EmitterContext().emit(Flags(FLAG_NESTED), *nodes)
         orig = fn.__code__
+        # Useful for readability on failure
+        self.assertEqual(
+            [ord(c) for c in orig.co_code], ctx.last_builder.buf.tolist())
         made = ctx.make_code(
-            name='<lambda>',
+            ctx.last_builder,
+            name=fn.__name__,
             filename=fn.__code__.co_filename,
             firstlineno=fn.__code__.co_firstlineno)
-        self.assertEqual(code_props(orig), code_props(made))  # sanity check
+        # Useful for readability on non-trivial failure
+        self.assertEqual(code_props(orig), code_props(made))
+        # Actual correctness check
         self.assertEqual(orig, made)
 
     @forPy27
-    def test_add_sanity(self):
-        self.assertEqual(
-            en(Return(Add(Load(0), Load(1)))),
-            co(lambda a, b: a + b))
+    def test_Load_sanity(self):
+        self.assertPerfectCode(
+            lambda a: a,
+            Function(('a',), None, Return(Load("a"))))
 
     @forPy27
-    def test_sub_sanity(self):
-        self.assertEqual(
-            en(Return(Subtract(Load(0), Load(1)))),
-            co(lambda a, b: a - b))
+    def test_Store_sanity(self):
+        def fn(): a = 1
+        self.assertPerfectCode(
+            fn,
+            Function((), None, Store("a", Const(1)), Return(Const(None))))
+
+    @forPy27
+    def test_Neg_sanity(self):
+        self.assertPerfectCode(
+            lambda a: -a,
+            Function(('a',), None, Return(Neg(Load("a")))))
+
+    @forPy27
+    def test_Const_sanity(self):
+        self.assertPerfectCode(
+            lambda: "hi",
+            Function((), None, Return(Const("hi"))))
+
+    @forPy27
+    def test_Add_sanity(self):
+        self.assertPerfectCode(
+            lambda a, b: a + b,
+            Function(('a', 'b'), None, Return(Add(Load("a"), Load("b")))))
+
+    @forPy27
+    def test_Subtract_sanity(self):
+        self.assertPerfectCode(
+            lambda a, b: a - b,
+            Function(('a', 'b'), None, Return(Subtract(Load("a"), Load("b")))))
 
     @forPy27
     def test_it_really_works(self):
-        ctx = Py27EmitterContext().emit([Function(('a', 'b'), [
-            Return(Add(Load('a'), Load('b')))])])
-        # code(argcount, nlocals, stacksize, flags, codestring, constants,
-        #      names, varnames, filename, name, firstlineno, lnotab,
-        #      freevars[, cellvars]])
-        argcount = len(ctx.local_vars)
-        nlocals = len(ctx.local_vars)
-        stacksize = ctx.stack_usage().max_size
-        flags = 0  # TODO: understand real flags
-        codestring = ctx.buf.tostring()
-        constants = (None, )
-        names = ()
-        varnames = tuple(ctx.local_vars)
-        filename = 'dummy.py'
-        name = 'add'
-        firstlineno = 1
-        lnotab = ''
-        freevars = ()
-        cellvars = ()
-        code = types.CodeType(argcount, nlocals, stacksize, flags, codestring,
-            constants, names, varnames, filename, name, firstlineno, lnotab,
-            freevars, cellvars)
+        ctx = Py27EmitterContext().emit(
+            Function(('a', 'b'), "add two things together",
+                Return(Add(Load('a'), Load('b')))))
+        code = ctx.make_code(ctx.last_builder, name="add")
         globals = {}
         name = None
         argdefs = ()
