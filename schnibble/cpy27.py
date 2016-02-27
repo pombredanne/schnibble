@@ -145,6 +145,7 @@ class STORE_FAST(Py27Op):
         value = ctx.stack.pop()
         result = Store(varname, value)
         ctx.locals[op_arg] = result
+        ctx.ops.append(result)
 
 
 @Py27Op.register(23)
@@ -186,7 +187,9 @@ class RETURN_VALUE(Py27Op):
     @classmethod
     def simulate(cls, ctx, op_arg):
         """Simulate execution of the operation."""
-        ctx.retval = Return(ctx.stack.pop())
+        result = Return(ctx.stack.pop())
+        ctx.retval = result
+        ctx.ops.append(result)
 
 
 class OperationNode(common.Emittable):

@@ -210,10 +210,14 @@ class OptimizerTests(TestCase):
             x = 3 + 6
             y = x - 5
             return z * y
+        ctx = unemit(fn.__code__, Py27Op)
+        self.assertEqual(ctx.ops, [
+            Store("x", Const(9)),
+            Store("y", Subtract(Load("x"), Const(5))),
+            Return(Multiply(Load('z'), Load('y')))])
         # NOTE: this doesn't work yet but the goal is to make it work :)
         ctx = unemit(fn.__code__, Py27Op)
         # TODO: actually optimize
-
 
 
 # Support function for FlagTests

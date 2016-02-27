@@ -256,6 +256,7 @@ class UnemitterContext(object):
         self.consts = code.co_consts
         self.locals = [None] * code.co_nlocals
         self.retval = None
+        self.ops = []
 
 
 def unemit(code, op_cls):
