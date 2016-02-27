@@ -3,7 +3,8 @@ import sys
 import types
 from unittest import TestCase, skipIf, expectedFailure
 
-from schnibble.cpy27 import Neg, Const, Load, Store, Add, Subtract, Return
+from schnibble.cpy27 import Neg, Const, Load, Store, Multiply, Add, Subtract
+from schnibble.cpy27 import Return
 from schnibble.cpy27 import Function
 from schnibble.cpy27 import Flags, FLAG_NESTED
 from schnibble.cpy27 import LOAD_FAST, RETURN_VALUE
@@ -150,6 +151,12 @@ class EmitterTests(TestCase):
             Function(('a', 'b'), None, Return(Subtract(Load("a"), Load("b")))))
 
     @forPy27
+    def test_Multiply_sanity(self):
+        self.assertPerfectCode(
+            lambda a, b: a * b,
+            Function(('a', 'b'), None, Return(Multiply(Load("a"), Load("b")))))
+
+    @forPy27
     def test_it_really_works(self):
         ctx = Py27EmitterContext().emit(
             Function(('a', 'b'), "add two things together",
@@ -190,10 +197,14 @@ class AnalyzerTests(TestCase):
         ctx = unemit(fn.__code__, Py27Op)
         self.assertEqual(ctx.retval, Return(Subtract(Load('a'), Load('b'))))
 
+    def test_unemit_Load_Load_Multiplu_Return(self):
+        fn = lambda a, b: a * b
+        ctx = unemit(fn.__code__, Py27Op)
+        self.assertEqual(ctx.retval, Return(Multiply(Load('a'), Load('b'))))
+
 
 class OptimizerTests(TestCase):
 
-    @expectedFailure
     def test_textbook_example(self):
         def fn(z):
             x = 3 + 6
@@ -201,6 +212,8 @@ class OptimizerTests(TestCase):
             return z * y
         # NOTE: this doesn't work yet but the goal is to make it work :)
         ctx = unemit(fn.__code__, Py27Op)
+        # TODO: actually optimize
+
 
 
 # Support function for FlagTests

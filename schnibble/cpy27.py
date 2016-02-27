@@ -86,6 +86,21 @@ class UNARY_NEGATIVE(Py27Op):
         ctx.stack.append(Neg(ctx.stack.pop()))
 
 
+@Py27Op.register(20)
+class BINARY_MULTIPLY(Py27Op):
+    """Multiply two topmost arguments from the stack."""
+
+    stack = common.dec_inc(-2, +1)
+
+    @classmethod
+    def simulate(cls, ctx, op_arg):
+        """Simulate execution of the operation."""
+        b = ctx.stack.pop()
+        a = ctx.stack.pop()
+        result = Multiply(a, b)
+        ctx.stack.append(result)
+
+
 @Py27Op.register(100)
 class LOAD_CONST(Py27Op):
     """Load a constant onto the stack."""
@@ -285,6 +300,12 @@ class Function(common.Emittable):
         for prog in self.progn:
             prog.emit(ctx)
         ctx.pop()
+
+
+class Multiply(OperationNode):
+    """Binary multiplication node."""
+
+    op = BINARY_MULTIPLY
 
 
 class Add(OperationNode):
