@@ -50,3 +50,38 @@ class Header32Tests(unittest.TestCase):
     def test_e_entry(self):
         self.assertEqual(elf.Header32.e_entry.offset, 0x18)
         self.assertEqual(elf.Header32.e_entry.size, 4)
+
+    def test_e_phoff(self):
+        self.assertEqual(elf.Header32.e_phoff.offset, 0x1C)
+        self.assertEqual(elf.Header32.e_phoff.size, 4)
+
+    def test_e_shoff(self):
+        self.assertEqual(elf.Header32.e_shoff.offset, 0x20)
+        self.assertEqual(elf.Header32.e_shoff.size, 4)
+
+    def test_e_flags(self):
+        self.assertEqual(elf.Header32.e_flags.offset, 0x24)
+        self.assertEqual(elf.Header32.e_flags.size, 4)
+
+    def test_e_ehsize(self):
+        self.assertEqual(elf.Header32.e_ehsize.offset, 0x24)
+        self.assertEqual(elf.Header32.e_ehsize.size, 4)
+
+    def test_e_phentsize(self):
+        self.assertEqual(elf.Header32.e_phentsize.offset, 0x24)
+        self.assertEqual(elf.Header32.e_phentsize.size, 4)
+
+    def test_e_phnum(self):
+        self.assertEqual(elf.Header32.e_phnum.offset, 0x24)
+        self.assertEqual(elf.Header32.e_phnum.size, 4)
+
+    def test_e_shentsize(self):
+        self.assertEqual(elf.Header32.e_shentsize.offset, 0x24)
+        self.assertEqual(elf.Header32.e_shentsize.size, 4)
+
+    def test_e_shstrndx(self):
+        self.assertEqual(elf.Header32.e_shstrndx.offset, 0x24)
+        self.assertEqual(elf.Header32.e_shstrnds.size, 4)
+
+    def test_total_size(self):
+        self.assertEqual(ctypes.sizeof(elf.Header32), 52)
