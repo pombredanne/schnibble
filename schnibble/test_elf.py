@@ -64,24 +64,38 @@ class Header32Tests(unittest.TestCase):
         self.assertEqual(elf.Header32.e_flags.size, 4)
 
     def test_e_ehsize(self):
-        self.assertEqual(elf.Header32.e_ehsize.offset, 0x24)
-        self.assertEqual(elf.Header32.e_ehsize.size, 4)
+        self.assertEqual(elf.Header32.e_ehsize.offset, 0x28)
+        self.assertEqual(elf.Header32.e_ehsize.size, 2)
 
     def test_e_phentsize(self):
-        self.assertEqual(elf.Header32.e_phentsize.offset, 0x24)
-        self.assertEqual(elf.Header32.e_phentsize.size, 4)
+        self.assertEqual(elf.Header32.e_phentsize.offset, 0x2a)
+        self.assertEqual(elf.Header32.e_phentsize.size, 2)
 
     def test_e_phnum(self):
-        self.assertEqual(elf.Header32.e_phnum.offset, 0x24)
-        self.assertEqual(elf.Header32.e_phnum.size, 4)
+        self.assertEqual(elf.Header32.e_phnum.offset, 0x2c)
+        self.assertEqual(elf.Header32.e_phnum.size, 2)
 
     def test_e_shentsize(self):
-        self.assertEqual(elf.Header32.e_shentsize.offset, 0x24)
-        self.assertEqual(elf.Header32.e_shentsize.size, 4)
+        self.assertEqual(elf.Header32.e_shentsize.offset, 0x2e)
+        self.assertEqual(elf.Header32.e_shentsize.size, 2)
+
+    def test_e_shnum(self):
+        self.assertEqual(elf.Header32.e_shnum.offset, 0x30)
+        self.assertEqual(elf.Header32.e_shnum.size, 2)
 
     def test_e_shstrndx(self):
-        self.assertEqual(elf.Header32.e_shstrndx.offset, 0x24)
-        self.assertEqual(elf.Header32.e_shstrnds.size, 4)
+        self.assertEqual(elf.Header32.e_shstrndx.offset, 0x32)
+        self.assertEqual(elf.Header32.e_shstrndx.size, 2)
 
     def test_total_size(self):
         self.assertEqual(ctypes.sizeof(elf.Header32), 52)
+
+    def test_create_x86_linux_exec(self):
+        header = elf.Header32.create_x86_linux_exec()
+        self.assertEqual(
+            list(header.e_ident),
+            [0x7f, ord('E'), ord('L'), ord('F'), 1,  1, 1, 3, 0,
+             0, 0, 0, 0, 0, 0, 0])
+        self.assertEqual(header.e_type, 2)
+        self.assertEqual(header.e_machine, 0x03)
+        self.assertEqual(header.e_version, 1)
