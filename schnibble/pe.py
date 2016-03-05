@@ -54,6 +54,9 @@ IMAGE_SUBSYSTEM_OS2_CUI              = 5
 IMAGE_SUBSYSTEM_POSIX_CUI            = 7
 
 
+MAGIC_PE32 = 0x010b
+MAGIC_PE32_PLUS = 0x020b
+
 
 class IMAGE_DOS_HEADER(Structure):
     """Header of DOS executables."""
@@ -92,60 +95,68 @@ class IMAGE_FILE_HEADER(Structure):
     """Header of a Portable Executable file."""
     _packed_ = 1
     _fields_ = [
-        ('mMachine', c_uint16),
-        ('mNumberOfSections', c_uint16),
-        ('mTimeDateStamp', c_uint32),
-        ('mPointerToSymbolTable', c_uint32),
-        ('mNumberOfSymbols', c_uint32),
-        ('mSizeOfOptionalHeader', c_uint16),
-        ('mCharacteristics', c_uint16)
+        ('Machine', c_uint16),
+        ('NumberOfSections', c_uint16),
+        ('TimeDateStamp', c_uint32),
+        ('PointerToSymbolTable', c_uint32),
+        ('NumberOfSymbols', c_uint32),
+        ('SizeOfOptionalHeader', c_uint16),
+        ('Characteristics', c_uint16)
     ]
 
 
 assert sizeof(IMAGE_FILE_HEADER) == 0x14
 
 
+class IMAGE_DATA_DIRECTORY(Structure):
+    _packed_ = 1
+    _fields_ = [
+        ('VirtualAddress', c_uint32),
+        ('Size', c_uint32),
+    ]
+
+
+assert sizeof(IMAGE_DATA_DIRECTORY) == 0x08
+
+
 class IMAGE_OPTIONAL_HEADER32(Structure):
     _packed_ = 1
     _fields_ = [
-        ('mMagic', c_uint16),
-        ('mMajorLinkerVersion', c_uint8),
-        ('mMinorLinerVersion', c_uint8),
-        ('mSizeOfCode', c_uint32),
-        ('mSizeOfInitializedData', c_uint32),
-        ('mSizeOfUninitializedData', c_uint32),
-        ('mAddressOfEntryPoint', c_uint32),
-        ('mBaseOfCode', c_uint32),
-        ('mBaseOfData', c_uint32),
-        ('mImageBase', c_uint32),
-        ('mSectionAligment', c_uint32),
-        ('mFileAlignment', c_uint32),
-        ('mMajorOperatingSystemVersion', c_uint16),
-        ('mMinorOperatingSystemVersion', c_uint16),
-        ('mMajorImageVersion', c_uint16),
-        ('mMinorImageVersion', c_uint16),
-        ('mMajorSubsystemVersion', c_uint16),
-        ('mMinorSubsystemVersion', c_uint16),
-        ('mWin32VersionValue', c_uint32),
-        ('mSizeOfImage', c_uint32),
-        ('mSizeOfHeaders', c_uint32),
-        ('mChecSum', c_uint32),
-        ('mSubsystem', c_uint16),
-        ('mDllCharacteristics', c_uint16),
-        ('mSizeOfStackReserve', c_uint32),
-        ('mSizeOfStackCommit', c_uint32),
-        ('mSizeOfHeapReserve', c_uint32),
-        ('mSizeOfHeapCommit', c_uint32),
-        ('mLoaderFlags', c_uint32),
-        ('mNumberOfRvaAndSizes', c_uint32),
+        ('Magic', c_uint16),
+        ('MajorLinkerVersion', c_uint8),
+        ('MinorLinerVersion', c_uint8),
+        ('SizeOfCode', c_uint32),
+        ('SizeOfInitializedData', c_uint32),
+        ('SizeOfUninitializedData', c_uint32),
+        ('AddressOfEntryPoint', c_uint32),
+        ('BaseOfCode', c_uint32),
+        ('BaseOfData', c_uint32),
+        ('ImageBase', c_uint32),
+        ('SectionAligment', c_uint32),
+        ('FileAlignment', c_uint32),
+        ('MajorOperatingSystemVersion', c_uint16),
+        ('MinorOperatingSystemVersion', c_uint16),
+        ('MajorImageVersion', c_uint16),
+        ('MinorImageVersion', c_uint16),
+        ('MajorSubsystemVersion', c_uint16),
+        ('MinorSubsystemVersion', c_uint16),
+        ('Win32VersionValue', c_uint32),
+        ('SizeOfImage', c_uint32),
+        ('SizeOfHeaders', c_uint32),
+        ('ChecSum', c_uint32),
+        ('Subsystem', c_uint16),
+        ('DllCharacteristics', c_uint16),
+        ('SizeOfStackReserve', c_uint32),
+        ('SizeOfStackCommit', c_uint32),
+        ('SizeOfHeapReserve', c_uint32),
+        ('SizeOfHeapCommit', c_uint32),
+        ('LoaderFlags', c_uint32),
+        ('NumberOfRvaAndSizes', c_uint32),
+        ('DataDirArray', IMAGE_DATA_DIRECTORY * 16)
     ]
 
-    MAGIC_PE32 = 0x010b
-    MAGIC_PE32_PLUS = 0x020b
 
-    def __init__(self):
-        super(IMAGE_OPTIONAL_HEADER32, self).__init__()
-        self.mMagic = self.MAGIC_PE32
+assert sizeof(IMAGE_OPTIONAL_HEADER32) == 0xE0
 
 
 class IMAGE_NT_HEADERS(Structure):
@@ -159,3 +170,5 @@ class IMAGE_NT_HEADERS(Structure):
     def __init__(self):
         super(IMAGE_NT_HEADERS, self).__init__()
         self.signature = 0x00004550
+
+assert sizeof(IMAGE_NT_HEADERS) == 0xF8
