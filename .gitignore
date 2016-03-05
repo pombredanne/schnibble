@@ -1,3 +1,6 @@
+# Generated .exe files
+*.exe
+
 # Tox files
 .tox
 
