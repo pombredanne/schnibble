@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Setup script for Schnibble."""
 from setuptools import setup
 
