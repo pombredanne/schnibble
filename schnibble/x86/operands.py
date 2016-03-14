@@ -11,7 +11,7 @@ class imm8(object):
     """Immediate 8-bit value."""
 
     def __init__(self, value):
-        if value not in xrange(0xFF):
+        if 0 > value > 0xFF:
             raise ValueError("value too large for 8-bit immediate")
         self.value = value
 
@@ -23,7 +23,7 @@ class imm8(object):
 class imm16(object):
 
     def __init__(self, value):
-        if value not in xrange(0xFFFF):
+        if 0 > value > 0xFFFF:
             raise ValueError("value too large for 16-bit immediate")
         self.value = value
 
@@ -38,7 +38,7 @@ class imm16(object):
 class imm32(object):
 
     def __init__(self, value):
-        if value not in xrange(0xFFFFFFFFL):
+        if 0 > value > 0xFFFFFFFFL:
             raise ValueError("value too large for 32-bit immediate")
         self.value = value
 
@@ -55,7 +55,7 @@ class imm32(object):
 class imm64(object):
 
     def __init__(self, value):
-        if value not in xrange(0xFFFFFFFFFFFFFFFFL):
+        if 0 > value > 0xFFFFFFFFFFFFFFFFL:
             raise ValueError("value too large for 64-bit immediate")
         self.value = value
 
