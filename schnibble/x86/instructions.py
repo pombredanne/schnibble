@@ -1,48 +1,15 @@
 # coding: utf-8
+"x86 instruction set."""
+
 from __future__ import absolute_import, print_function
 
-from .registers import AL, AX
-from .flags import OF, DF, SF, ZF, AF, PF, CF
+from .registers import AL, AX, EAX, RAX
+from .flags import OF, SF, ZF, AF, PF, CF
+from .flags import FlagSet
+from .operands import imm8, imm16, imm32, imm64, reg8, reg16, reg32, reg64
 
 
-class imm8(object):
-
-    """Immediate 8-bit value."""
-
-    def __init__(self, value):
-        if value not in range(0xFF):
-            raise ValueError("value too large for 8-bit immediate")
-        self.value = value
-
-    @property
-    def bytes(self):
-        return bytearray([self.value])
-
-
-class imm16(object):
-
-    def __init__(self, value):
-        if value not in range(0xFFFF):
-            raise ValueError("value too large for 16-bit immediate")
-        self.value = value
-
-    @property
-    def bytes(self):
-        return bytearray([self.value >> 8, self.value & 0xFF])
-
-
-class imm32(object):
-
-    def __init__(self, value):
-        if value not in range(0xFFFFFFFFL):
-            raise ValueError("value too large for 32-bit immediate")
-        self.value = value
-
-    @property
-    def bytes(self):
-        return bytearray([
-            (self.value >> 24) & 0xFF, (self.value >> 16) & 0xFF,
-            (self.value >> 8) & 0xFF, self.value & 0xFF])
+__all__ = ('AAA', 'ADD', 'MOV', 'RET')
 
 
 class Instruction(object):
@@ -69,10 +36,10 @@ class AAA(Instruction):
     0. In either case, AAA clears bits 7:4 of the AL register, leaving the
     correct decimal digit in bits 3:0.  This instruction also makes it
     possible to add ASCII numbers without having to mask off the upper
-    nibble ‘3’. 
+    nibble ‘3’.
     """
 
-    affected_rflags =  AF | CF
+    affected_rflags = AF | CF
 
     @classmethod
     def emit(cls, buf):
@@ -85,31 +52,10 @@ class AAA(Instruction):
         buf.append(0x37)
 
 
-class ModRM:
-
-    def __init__(self, mod, reg, r_m):
-        if mod not in range(1 << 2):
-            raise ValueError("mod invalid")
-        if reg not in range(1 << 3):
-            raise ValueError("reg invalid")
-        if r_m not in range(1 << 3):
-            raise ValueError("r/m invalid")
-        self.mod = mod
-        self.reg = reg
-        self.r_m = r_m
-
-    @property
-    def byte(self):
-        return self.r_m | self.reg << 3  | self.mod << 6
-
-    def __repr__(self):
-        return "<ModRM mod:{}, reg:{}, r/m:{}>".format(self.mod, self.reg, self.r_m)
-
-        
 class ADD(Instruction):
     """Signed or Unsigned Add."""
 
-    affected_rflags =  OF | SF | ZF | AF | PF | CF
+    affected_rflags = OF | SF | ZF | AF | PF | CF
 
     @classmethod
     def emit(cls, buf, dest, src):
@@ -133,12 +79,50 @@ class ADD(Instruction):
             buf.extend(src.bytes)
         else:
             # Lots of reg/mem encodings...
-            raise NotImplemented("don't know how to encode: add {} {}".format(
-                self.dest.__class__.__name__, self.src.__class__.__name__))
+            raise NotImplemented("don't know how to encode: {} {} {}".format(
+                cls.__name__, dest.__class__.__name__, src.__class__.__name__))
 
 
 class MOV(Instruction):
     """Move."""
 
+    @classmethod
     def emit(cls, buf, dest, src):
-        raise NotImplementedError
+        """Emit instruction into a code buffer."""
+        # AMD64 Architecture Programmer’s Manual Volume 3:
+        # General-Purpose and System Instructions
+        #
+        # Page 217-218 (253-254 pdf page)
+        assert isinstance(buf, bytearray)
+        if isinstance(dest, reg8) and isinstance(src, imm8):
+            buf.append(0xB0 + dest.plus_rb)
+            buf.extend(src.bytes)
+        elif isinstance(dest, reg16) and isinstance(src, imm16):
+            buf.append(0xB8 + dest.plus_rw)
+            buf.extend(src.bytes)
+        elif isinstance(dest, reg32) and isinstance(src, imm32):
+            buf.append(0xB8 + dest.plus_rd)
+            buf.extend(src.bytes)
+        elif isinstance(dest, reg64) and isinstance(src, imm64):
+            buf.append(0xB8 + dest.plus_rq)
+            buf.extend(src.bytes)
+        else:
+            raise NotImplemented("don't know how to encode: {} {} {}".format(
+                cls.__name__, dest.__class__.__name__, src.__class__.__name__))
+
+
+class RET(Instruction):
+    """Return (near) from Called Procedure."""
+
+    affected_rflags = FlagSet()
+
+    @classmethod
+    def emit(cls, buf, op=None):
+        assert isinstance(buf, bytearray)
+        if op is None:
+            buf.append(0xc3)
+        elif isinstance(op, imm16):
+            buf.append(0xc2)
+            buf.extend(op.bytes)
+        else:
+            raise ValueError("unexpected operand: {!r}".format(op))
