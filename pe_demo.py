@@ -7,6 +7,7 @@ from __future__ import absolute_import, print_function
 
 import argparse
 import os
+import sys
 from ctypes import sizeof
 
 from schnibble import pe
@@ -58,7 +59,8 @@ def main():
         stream.seek(nt_headers.OptionalHeader.SizeOfImage)
         stream.truncate(nt_headers.OptionalHeader.SizeOfImage)
         assert stream.tell() == 0x160, hex(stream.tell())
-        os.fchmod(stream.fileno(), 0o755)
+        if sys.platform != "win32":
+            os.fchmod(stream.fileno(), 0o755)
 
 
 if __name__ == "__main__":
