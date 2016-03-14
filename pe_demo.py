@@ -11,6 +11,19 @@ from ctypes import sizeof
 
 from schnibble import pe
 
+from schnibble.x86.instructions import MOV, RET
+from schnibble.x86.operands import imm32
+from schnibble.x86.registers import EAX
+
+
+def emit_code(*asm):
+    buf = bytearray()
+    for line in asm:
+        inst = line[0]
+        args = line[1:]
+        inst.emit(buf, *args)
+    return buf
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -32,12 +45,11 @@ def main():
     nt_headers.OptionalHeader.SizeOfImage = 0x160
     nt_headers.OptionalHeader.SizeOfHeaders = 0x140
     nt_headers.OptionalHeader.Subsystem = pe.IMAGE_SUBSYSTEM_WINDOWS_CUI
-    code = bytearray([
-        # mov eax, 42
-        0xb8, 0x2a, 0x00, 0x00, 0x00,
-        # retn
-        0xc3,
-    ])
+
+    code = emit_code(
+        (MOV, EAX, imm32(42)),
+        (RET,),
+    )
     with ns.output as stream:
         stream.write(dos_header)
         stream.write(nt_headers)
