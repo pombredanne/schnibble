@@ -1,4 +1,10 @@
+# coding: utf-8
+"""Executable and Linkable Format."""
+
+from __future__ import absolute_import, print_function
+
 import ctypes
+
 
 EI_MAG0 = 0x00
 EI_MAG1 = 0x01
@@ -8,7 +14,7 @@ EI_CLASS = 0x04
 EI_DATA = 0x05
 EI_VERSION = 0x06
 EI_OSABI = 0x07
-EI_ABIVERSION =0x08
+EI_ABIVERSION = 0x08
 EI_PAD = 0x09
 
 class_32bit = 1
@@ -47,7 +53,7 @@ class Header32(ctypes.Structure):
         ('e_ehsize', ctypes.c_uint16),
         ('e_phentsize', ctypes.c_uint16),
         ('e_phnum', ctypes.c_uint16),
-        ('e_shentsize' ,ctypes.c_uint16),
+        ('e_shentsize', ctypes.c_uint16),
         ('e_shnum', ctypes.c_uint16),
         ('e_shstrndx', ctypes.c_uint16),
     ]

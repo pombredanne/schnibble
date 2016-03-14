@@ -1,6 +1,10 @@
+# coding: utf-8
 """Portable Executable."""
 
+from __future__ import absolute_import, print_function
+
 from ctypes import sizeof, Structure, c_uint8, c_uint16, c_uint32, c_int32
+
 
 #: Relocation info stripped from file.
 IMAGE_FILE_RELOCS_STRIPPED         = 0x0001
