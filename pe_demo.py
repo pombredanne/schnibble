@@ -1,5 +1,6 @@
 """Demonstration generating a simple x86 PE executable."""
 import argparse
+import os
 from ctypes import sizeof
 
 from schnibble import pe
@@ -39,6 +40,7 @@ def main():
         stream.seek(nt_headers.OptionalHeader.SizeOfImage)
         stream.truncate(nt_headers.OptionalHeader.SizeOfImage)
         assert stream.tell() == 0x160, hex(stream.tell())
+        os.fchmod(stream.fileno(), 0o755)
 
 
 if __name__ == "__main__":
