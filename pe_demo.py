@@ -1,4 +1,10 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 """Demonstration generating a simple x86 PE executable."""
+
+from __future__ import absolute_import, print_function
+
 import argparse
 import os
 from ctypes import sizeof
