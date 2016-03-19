@@ -12,7 +12,7 @@ from ctypes import sizeof
 
 from schnibble import pe
 
-from schnibble.x86.instructions import MOV, RET
+from schnibble.x86.instructions import ADD, MOV, RET
 from schnibble.x86.operands import imm32
 from schnibble.x86.registers import EAX
 
@@ -49,6 +49,7 @@ def main():
 
     code = emit_code(
         (MOV, EAX, imm32(42)),
+        (ADD, EAX, 1),
         (RET,),
     )
     with ns.output as stream:
