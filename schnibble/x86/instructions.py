@@ -111,6 +111,26 @@ class MOV(Instruction):
                 cls.__name__, dest.__class__.__name__, src.__class__.__name__))
 
 
+class INT(Instruction):
+    """
+    Transfers execution to the interrupt handler specified by an 8-bit unsigned
+    immediate value. This value is an interrupt vector number (00h to FFh),
+    which the processor uses as an index into the interrupt-descriptor table
+    (IDT).
+    """
+
+    @classmethod
+    def emit(cls, buf, op):
+        """Emit instruction into a code buffer."""
+        assert isinstance(buf, bytearray)
+        if isinstance(op, imm8):
+            # Call interrupt service routine specified by interrupt vector imm8
+            buf.append(0xCD)
+            buf.extend(op.bytes)
+        else:
+            raise ValueError("unexpected operand: {!r}".format(op))
+
+
 class RET(Instruction):
     """Return (near) from Called Procedure."""
 
