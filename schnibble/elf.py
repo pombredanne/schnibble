@@ -37,6 +37,22 @@ type_executable = 2
 type_shared = 3
 type_dump = 4
 
+PT_NULL = 0
+PT_LOAD = 1
+PT_DYNAMIC = 2
+PT_INTERP = 3
+PT_NOTE = 4
+PT_SHLIB = 5
+PT_PHDR = 6
+PT_TLS = 7
+PT_NUM = 8
+PT_GNU_EH_FRAME = 0x6474e550
+PT_GNU_STACK    = 0x6474e551
+PT_GNU_RELRO    = 0x6474e552
+
+PT_X = 1 << 0
+PT_W = 1 << 1
+PT_R = 1 << 2
 
 class Header32(ctypes.Structure):
     """ELF header for 32 bit architectures."""
@@ -83,3 +99,35 @@ class Header32(ctypes.Structure):
         self.e_machine = machine_x86
         self.e_version = elf_version
         return self
+
+
+class ProgramHeader32(ctypes.Structure):
+    """ELF program header for 32 bit architectures."""
+    _packed_ = 1
+    _fields_ = [
+        ('p_type', ctypes.c_uint32),
+        ('p_offset', ctypes.c_uint32),
+        ('p_vaddr', ctypes.c_uint32),
+        ('p_paddr', ctypes.c_uint32),
+        ('p_filesz', ctypes.c_uint32),
+        ('p_memsz', ctypes.c_uint32),
+        ('p_flags', ctypes.c_uint32),
+        ('p_align', ctypes.c_uint32),
+    ]
+
+
+class SectionHeader32(ctypes.Structure):
+    """ELF section header for 32 bit architectures."""
+    _packed_ = 1
+    _fields_ = [
+        ('sh_name', ctypes.c_uint32),
+        ('sh_type', ctypes.c_uint32),
+        ('sh_flags', ctypes.c_uint32),
+        ('sh_addr', ctypes.c_uint32),
+        ('sh_offset', ctypes.c_uint32),
+        ('sh_size', ctypes.c_uint32),
+        ('sh_link', ctypes.c_uint32),
+        ('sh_info', ctypes.c_uint32),
+        ('sh_addralign', ctypes.c_uint32),
+        ('sh_entsize', ctypes.c_uint32),
+    ]
