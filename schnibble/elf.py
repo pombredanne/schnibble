@@ -30,10 +30,8 @@ EV_CURRENT = 1
 
 osabi_linux = 0x03
 
-machine_x86 = 0x03
-machine_x86_64 = 0x3e
-machine_arm = 0x28
-machine_aarch64 = 0xb7
+EM_NONE = 0
+EM_386 = 3
 
 # Applicable values of Header32.e_type
 ET_NONE = 0
@@ -104,7 +102,7 @@ class Header32(ctypes.Structure):
         self.e_ident[EI_OSABI] = osabi_linux
         self.e_ident[EI_ABIVERSION] = 0
         self.e_type = ET_EXEC
-        self.e_machine = machine_x86
+        self.e_machine = EM_386
         self.e_version = EV_CURRENT
         return self
 
