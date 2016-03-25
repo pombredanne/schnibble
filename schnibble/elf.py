@@ -120,6 +120,9 @@ class ProgramHeader32(ctypes.Structure):
     ]
 
 
+assert ctypes.sizeof(ProgramHeader32) == 0x20
+
+
 class SectionHeader32(ctypes.Structure):
     """ELF section header for 32 bit architectures."""
     _packed_ = 1
@@ -135,3 +138,6 @@ class SectionHeader32(ctypes.Structure):
         ('sh_addralign', ctypes.c_uint32),
         ('sh_entsize', ctypes.c_uint32),
     ]
+
+
+assert ctypes.sizeof(SectionHeader32) == 0x28
