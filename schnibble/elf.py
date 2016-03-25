@@ -32,10 +32,14 @@ machine_x86_64 = 0x3e
 machine_arm = 0x28
 machine_aarch64 = 0xb7
 
-type_relocatable = 1
-type_executable = 2
-type_shared = 3
-type_dump = 4
+# Applicable values of Header32.e_type
+ET_NONE = 0
+ET_REL = 1
+ET_EXEC = 2
+ET_DYN = 3
+ET_CORE = 4
+ET_LOPROC = 0xff00
+ET_HIPROC = 0xffff
 
 PT_NULL = 0
 PT_LOAD = 1
@@ -95,7 +99,7 @@ class Header32(ctypes.Structure):
         self.e_ident[EI_VERSION] = elf_version
         self.e_ident[EI_OSABI] = osabi_linux
         self.e_ident[EI_ABIVERSION] = 0
-        self.e_type = type_executable
+        self.e_type = ET_EXEC
         self.e_machine = machine_x86
         self.e_version = elf_version
         return self
