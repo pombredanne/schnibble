@@ -17,13 +17,16 @@ EI_OSABI = 0x07
 EI_ABIVERSION = 0x08
 EI_PAD = 0x09
 
-class_32bit = 1
-class_64bit = 2
+ELFCLASSNONE = 0
+ELFCLASS32 = 1
+ELFCLASS64 = 2
 
-data_le = 1
-data_be = 2
+ELFDATANONE = 0
+ELFDATA2LSB = 1
+ELFDATA2MSB = 2
 
-elf_version = 1
+EV_NONE = 0
+EV_CURRENT = 1
 
 osabi_linux = 0x03
 
@@ -57,6 +60,7 @@ PT_GNU_RELRO    = 0x6474e552
 PT_X = 1 << 0
 PT_W = 1 << 1
 PT_R = 1 << 2
+
 
 class Header32(ctypes.Structure):
     """ELF header for 32 bit architectures."""
@@ -94,14 +98,14 @@ class Header32(ctypes.Structure):
         self.e_ident[EI_MAG1] = ord('E')
         self.e_ident[EI_MAG2] = ord('L')
         self.e_ident[EI_MAG3] = ord('F')
-        self.e_ident[EI_CLASS] = class_32bit  # 32 bit header
-        self.e_ident[EI_DATA] = data_le  # little endian
-        self.e_ident[EI_VERSION] = elf_version
+        self.e_ident[EI_CLASS] = ELFCLASS32
+        self.e_ident[EI_DATA] = ELFDATA2LSB
+        self.e_ident[EI_VERSION] = EV_CURRENT
         self.e_ident[EI_OSABI] = osabi_linux
         self.e_ident[EI_ABIVERSION] = 0
         self.e_type = ET_EXEC
         self.e_machine = machine_x86
-        self.e_version = elf_version
+        self.e_version = EV_CURRENT
         return self
 
 
