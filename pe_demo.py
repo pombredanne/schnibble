@@ -10,8 +10,7 @@ import os
 import sys
 from ctypes import sizeof
 
-from schnibble import pe
-
+from schnibble.binfmt import pe
 from schnibble.x86.instructions import ADD, MOV, RET
 from schnibble.x86.operands import imm32
 from schnibble.x86.registers import EAX
