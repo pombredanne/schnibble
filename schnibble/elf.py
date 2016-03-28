@@ -243,24 +243,25 @@ class Builder(object):
         for phdr in self._program_headers:
             # phdr.p_offset = ...
             off += self._stream.write(phdr)
-        for blob_fn in self._blob_fns:
-            blob = blob_fn()
-            off += self._stream.write(blob)
+        for data_fn in self._data_fns:
+            data = data_fn()
+            off += self._stream.write(data)
         for shdr in self._section_headers:
             # TODO: tie section header with written data
             off += self._stream.write(shdr)
         return off
 
     def add_program_header(self):
-        phdr = self.template.phdr_cls()
+        phdr = self._template.phdr_cls()
         self._program_headers.append(phdr)
         return phdr
 
     def add_section_header(self):
         # Inject reserved zero-filled section header
         if len(self._section_headers) == 0:
-            self._section_headers.append(self.template.shdr_cls())
-        shdr = self.template.shdr_cls()
+            null_shdr = self._template.shdr_cls()
+            self._section_headers.append(null_shdr)
+        shdr = self._template.shdr_cls()
         self._section_headers.append(shdr)
         return shdr
 
