@@ -240,6 +240,9 @@ class Builder(object):
         header.e_shnum = len(self._section_headers)
         # TODO: header.e_shstrndx = ...
         off = self._stream.write(header)
+        # TODO: see to beyond program headers and process data
+        # allow each data callback/object to influence program
+        # and section headers.
         for phdr in self._program_headers:
             # phdr.p_offset = ...
             off += self._stream.write(phdr)
