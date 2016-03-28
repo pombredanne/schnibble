@@ -88,6 +88,30 @@ class Elf32_Ehdr(ctypes.Structure):
 assert ctypes.sizeof(Elf32_Ehdr) == 0x34
 
 
+class Elf64_Ehdr(ctypes.Structure):
+    """ELF header for 64 bit architectures."""
+    _packed_ = 1
+    _fields_ = [
+        ('e_ident', ctypes.c_uint8 * (4 + 1 + 1 + 1 + 1 + 1 + 7)),
+        ('e_type', ctypes.c_uint16),
+        ('e_machine', ctypes.c_uint16),
+        ('e_version', ctypes.c_uint32),
+        ('e_entry', ctypes.c_uint64),
+        ('e_phoff', ctypes.c_uint64),
+        ('e_shoff', ctypes.c_uint64),
+        ('e_flags', ctypes.c_uint32),
+        ('e_ehsize', ctypes.c_uint16),
+        ('e_phentsize', ctypes.c_uint16),
+        ('e_phnum', ctypes.c_uint16),
+        ('e_shentsize', ctypes.c_uint16),
+        ('e_shnum', ctypes.c_uint16),
+        ('e_shstrndx', ctypes.c_uint16),
+    ]
+
+
+assert ctypes.sizeof(Elf64_Ehdr) == 0x40
+
+
 PT_NULL = 0
 PT_LOAD = 1
 PT_DYNAMIC = 2
