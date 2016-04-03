@@ -233,7 +233,7 @@ class Builder(object):
     """Builder for ELF files."""
 
     def __init__(self, stream, template):
-        if isinstance(stream, file):
+        if not isinstance(stream, file):
             raise TypeError("stream is not a file")
         if stream.mode != 'wb':
             raise ValueError("stream must be open in writable binary mode")
