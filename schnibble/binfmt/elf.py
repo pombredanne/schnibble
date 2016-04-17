@@ -284,7 +284,8 @@ class Builder(object):
         return phdr
 
     def add_section_header(self):
-        # Inject reserved zero-filled section header
+        # Inject reserved zero-filled section header.
+        # This is done on-demand, before first real section is created.
         if len(self._section_headers) == 0:
             null_shdr = self._template.shdr_cls()
             self._section_headers.append(null_shdr)
