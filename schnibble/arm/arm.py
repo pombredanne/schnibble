@@ -2,7 +2,6 @@
 
 
 class Flags(object):
-
     """ARM status flags (userspace part)."""
 
     Negative = 1 << 31
