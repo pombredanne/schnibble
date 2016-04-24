@@ -18,6 +18,8 @@ class Flags(object):
 
 
 class arm_enc(ctypes.Structure):
+    """Encoding of ARMv7-A instructions."""
+
     _fields_ = [
         ('_f1', ctypes.c_uint32, 4),
         ('op', ctypes.c_uint32, 1),
