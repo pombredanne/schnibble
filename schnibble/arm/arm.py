@@ -20,9 +20,11 @@ class Flags(object):
 class arm_enc(ctypes.Structure):
     _fields_ = [
         ('_f1', ctypes.c_uint32, 4),
-        ('op', ctypes.c_uint32, 19),
-        ('_f2', ctypes.c_uint32, 4),
+        ('op', ctypes.c_uint32, 1),
+        ('_f2', ctypes.c_uint32, 20),
         ('op1', ctypes.c_uint32, 3),
         ('cond', ctypes.c_uint32, 4),
     ]
     _packed_ = 1
+
+assert ctypes.sizeof(arm_enc) == 4
